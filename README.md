@@ -1,0 +1,83 @@
+# React／Frontendにおける単体テストと結合テストの境界
+
+**Frontendのテストは、単体テストと結合テストの間にFrontend内部結合テストを置いた4段階で分ける。境界は、使う道具や実行環境ではなく、個別の責務を検証するのか、責務間の連携を検証するのかで引く。**
+
+Reactを用いたFrontend開発で、単体テストはどこまでで、どこから結合テストになるのかを整理し、Frontend単体テストの種別、テストレベルと実行環境の関係、受託開発の工程（PG・UT／IT／ST）への対応、単体テスト工程の完了条件までを1記事にまとめた社内向けの技術標準の資料。
+
+[記事を読む](ARTICLE.md)
+
+## 論旨の要約
+
+1. Frontendのテストは、FE単体テスト／FE内部結合テスト／FE・BE結合テスト／システムテストの4段階で分ける。従来の「単体テスト→結合テスト」の2段階の間に、Frontend内部結合テストを独立した区分として置く。
+2. 単体テストとFrontend内部結合テストの境界は、個別の責務を検証しているのか、複数の責務間の連携を検証しているのかで決まる。コンポーネント単位だから単体、ブラウザを使うから結合、という分類はしない。
+3. ブラウザを使うかどうか（実行環境）は、テストレベルとは別の分類軸である。Playwrightを使ってもコンポーネントだけを対象にすれば単体テストであり、Vitestを使っても複数のコンポーネントと状態管理の連携を検証すれば内部結合テストになる。
+4. Frontend単体テストは、ロジック／バリデーション／Hooks／状態管理／コンポーネント表示／コンポーネント操作／APIクライアント／コンポーネント品質の8種別に分け、種別×テストレベルのマトリクスで、最も低コストで確実に検証できる工程を主たる検証工程として1つ決める。
+5. Frontend内部結合テストはBackendの完成を待たずに実施でき、テスト技法上は結合テストでも、プロジェクト管理上はPG・UT工程に含める。単体テスト工程の完了は、Mock APIで画面全体の機能が検証され、実Backendがないと検証できない事項が分離されている状態で判定する。IT工程を、Frontendの基本的な動作不良を発見する工程にしない。
+6. AIにテストを生成させる場合も、単体テストとFrontend内部結合テストでは与える情報の粒度が異なるので、テスト生成の仕組みは種別と検証責務ごとに分ける。
+
+本文は `ARTICLE.md` の1記事で、連載形式ではない。図版は `assets/` のSVGで、すべて `scripts/draw_figures.py` が生成する。社内向け資料のため、GitHub Pagesなどの外部公開は行わず、オフライン閲覧用の単一HTMLで配布する。
+
+## ファイル構成
+
+```text
+Frontend_test/
+├── README.md                  # リポジトリ案内（本ファイル）
+├── ARTICLE.md                 # 記事本文（Markdown）。閲覧サイトでは index.html になる
+├── site.json                  # サイト定義（題名、版、日付、記事のパス）
+├── assets/                    # 図（SVG）と同名の PNG（幅2000px）。ファイル名は章番号で始める
+├── dist/offline.html          # 配布用の単一HTML（ビルド成果物の控え。build_single.py が更新）
+├── site-src/styles.css        # 閲覧サイトのスタイル（前の記事と共通）
+├── scripts/
+│   ├── draw_figures.py        # 全図版を決定論的に生成（Python標準ライブラリのみ）
+│   ├── check_figures.py       # SVGの整形性・最小フォント・配色・コントラスト・箱からのはみ出し・文字重なりを検査
+│   ├── export_png.py          # assets/*.svg → assets/*.png（rsvg-convert、幅2000px）。--check で存在と新しさを確認
+│   ├── build.py               # ARTICLE.md → _site/（HTML）
+│   ├── build_single.py        # _site/index.html → _site/offline.html と dist/offline.html（図を埋め込んだ単一HTML）
+│   └── check_html.py          # _site/ のリンク・図版数・alt・スクリプト不在を検査
+├── .claude/launch.json        # ローカル確認用のプレビューサーバー定義（_site/ を 8765 番で配信。git管理外）
+└── claudedocs/                # 公開計画などの作業記録（サイトには載せない）
+```
+
+生成物 `_site/` は `.gitignore` で除外する。`dist/offline.html` だけは配布用に管理対象とする。
+
+## GitLab・GitHubで読む
+
+`ARTICLE.md` をリポジトリのPreviewで開く。図は相対リンク先のSVGとして表示される。閲覧のために専用アプリは必要ない。表のセルの縦結合（下記の編集ルール8）はPreviewでは行われない。
+
+## ブラウザで読む（ローカル生成）
+
+Python 3.11以降とPandoc 3.xを使う。Python標準ライブラリだけで動き、追加パッケージは不要である。PNG の書き出しだけは rsvg-convert（librsvg）を使う。この版はPython 3.13・Pandoc 3.7系・librsvg 2.60系で検証した。
+
+```sh
+python3 scripts/draw_figures.py    # 図版を再生成（図を変えたとき）
+python3 scripts/check_figures.py   # 図版の検査
+python3 scripts/export_png.py      # SVG と同名の PNG を書き出す（要 rsvg-convert：brew install librsvg）
+python3 scripts/build.py
+python3 scripts/build_single.py    # オフライン閲覧用の単一HTML（_site/offline.html と dist/offline.html）
+python3 scripts/check_html.py
+```
+
+`_site/index.html` をブラウザで開く。目次ドロワー（記事の章見出し）、相対リンクの図をローカルで表示する。`check_html.py` は `offline.html` へのリンクも検査するので、`build_single.py` の後に実行する。
+
+## 配布する
+
+`dist/offline.html` は記事をファイル1つにまとめたもので、図を data URI として埋め込み、インターネット接続なしでも開ける。社内への配布はこのファイル1つを共有すればよい。外部スクリプト・外部フォント・外部通信は使っていない。
+
+個別の図を別の資料に貼るときは `assets/` の PNG（SVG と同名、幅2000px）を使う。本文や図を変えたら `scripts/build_single.py` を実行して `dist/offline.html` も更新し、一緒にコミットする。
+
+CIで検証する場合は、上記の6コマンドを順に実行し、いずれかが失敗したら配布しない。
+
+## 編集ルール
+
+1. 記事は単独で読めるように結論・前提・用語を記述する。未確定の事項は「※」で始まる段落に明記し、確定したら本文へ移す。社内の案件名や案件固有の数値は載せない。
+2. SVGのファイル名は図を置く章の番号で始める。
+3. `assets/` の図はすべて `scripts/draw_figures.py` が生成し、PNG は `scripts/export_png.py` が SVG から書き出す。SVG も PNG も手で編集せず、スクリプトを直して再生成する。文字は14px以上、注記は16px（本文では720pxに縮小表示される）。
+4. 図は定性的な配置と塗り分けで示し、根拠のない数値を描かない。要素は2〜5個、矢印は1方向に限る。テストレベルの鎖（FE単体→FE内部結合→FE・BE結合→ST）は `levels()` で描き、複数の図で同じ形を使う。箱と箱のつながりは矢頭のない線で描く。
+5. 色は役割で固定する。NEUTRAL（画面・コンポーネント・Hookなど構成要素の箱、区別を付けない要素）、PRIMARY（FE単体テスト＝個別の責務。1つの箱の中を検証する範囲）、LINK（FE内部結合テスト＝責務間の連携。箱と箱をつなぐ線を検証する範囲。Mock APIを含む）、POSITIVE（Backendの完成を待たずに検証できる範囲＝PG・UT工程に入るもの）、ATTENTION（実Backendがないと検証できない事項、IT工程へ持ち越される事項。1図に1系統）、INK（結論は色ではなく太字）。1図の地の塗りは4種以内、文字と地色のコントラスト比は4.5以上とし、`scripts/check_figures.py` が機械的に検査する。色だけで状態を伝える図には文字ラベルを併記する。実線は流れとつながり、破線は境界の外側、2pxの細線はブラケットに使う。
+6. 図のキャプション（Markdown の alt ＝ SVG の aria-label）は、図の主題を表す名詞句で全角30字以内とし、要素の列挙や「〜を示す図」で終える書き方はしない。図の内容の詳しい説明は SVG 内の `<desc>` に書く。長さは `scripts/check_figures.py` と `scripts/check_html.py` が機械的に検査する。
+7. 冒頭の結論文は h1 直後の太字だけの段落として書く（CSS が導入文として整える）。本文中の強調は太字だけの段落にしてよいが、h3 直後には置かない（h3 直後の太字だけの段落は節のスコープ表示として小さく表示される）。
+8. 表のセルの縦結合は `scripts/build.py` がビルド時に rowspan で行う。1列目は直前の行と同じ内容なら結合する（空欄と「—」は結合しない）。それ以外の列は、セルに「〃」（同上）と書くと直上のセルに結合する。Git のプレビューでは結合されず、同じ値がそのまま見える。結合した表は先頭列だけ折り返さない（CSS の `.table-grid td:first-child`）。
+9. スマートフォン幅（360px）では、§5 のマトリクスと §8 のテスト生成の表が `.table-wrap` の中で横スクロールになる。これは許容する。それ以外の表は横スクロールなしで収まることを確認する。
+10. 表の記号 ◎○― は表ごとに意味が異なるので、記号を使う表の直下に凡例を置く。
+11. 出典と注記は、本文の該当文の末尾に Pandoc の脚注 `[^id]` を付け、記事末尾の「## 参考文献・注記」に `[^id]: 著者, *題名*（年）。要旨。URL` の形で書く。URL に `utm_source` などの追跡パラメータを付けない。この h2 は目次の章番号に含めず、目次ドロワーの下部からリンクする。
+12. 題名・日付・版を変えたときは `site.json` と本READMEを更新し、`scripts/build.py` と `scripts/check_html.py` を通す。
