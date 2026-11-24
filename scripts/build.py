@@ -82,7 +82,7 @@ def merge_cells(output: str) -> str:
                     anchors[c] = cell
         rows_html = []
         for cells in parsed:
-            tds = '\n'.join(f'<td{(" rowspan=\"%d\"" % c["span"]) if c["span"] > 1 else ""}{c["attrs"]}>{c["inner"]}</td>' for c in cells if not c['drop'])
+            tds = '\n'.join('<td%s%s>%s</td>' % (' rowspan="%d"' % c['span'] if c['span'] > 1 else '', c['attrs'], c['inner']) for c in cells if not c['drop'])
             rows_html.append(f'<tr>\n{tds}\n</tr>')
         return '<tbody>\n' + '\n'.join(rows_html) + '\n</tbody>'
     output = re.sub(r'<tbody>(.*?)</tbody>', merge_tbody, output, flags=re.S)
