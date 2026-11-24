@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark"><title>React／Frontendにおける単体テストと結合テストの境界</title>
+<style>/* 閲覧サイトのスタイル。Claude Desktop の Markdown ビューアを参考に、読みやすさ（本文の行長・行間・見出し階層）と図版の適正サイズを優先する。 */
+:root{color-scheme:light dark;--paper:#faf9f5;--card:#fff;--ink:#1f2d36;--muted:#5d6e78;--accent:#1f6f9a;--line:#dfe6e3;--soft:#f0f4f2;--table-stripe:#f6f8f7;--measure:720px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",system-ui,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans CJK JP","Noto Sans JP",Meiryo,sans-serif;font-size:16px;line-height:1.75;letter-spacing:.012em;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:3px}a:hover{text-decoration-thickness:2px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+
+/* ヘッダー */
+.topbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line);padding:12px max(20px,calc((100vw - 1180px)/2));background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:saturate(1.2) blur(8px)}
+.brand{flex:1 1 auto;min-width:0;text-decoration:none;font-size:17px;line-height:1.3;font-weight:650;color:var(--ink)}.brand span{display:block;font-size:9.5px;letter-spacing:.22em;color:var(--accent);margin-top:3px;font-weight:600}
+.topbar-actions{flex:0 0 auto;display:flex;align-items:center;gap:18px;font-size:13.5px;white-space:nowrap}
+
+/* 本文カラム */
+.layout{max-width:1180px;margin:auto;padding:36px 28px 80px}
+main{min-width:0;max-width:var(--measure);margin:auto}
+article{font-size:16px}
+article>*:first-child{margin-top:0}
+h1{font-size:30px;line-height:1.4;letter-spacing:0;font-weight:700;margin:4px 0 10px}
+h1+h2{font-size:16.5px;line-height:1.6;color:var(--muted);font-weight:500;margin:0 0 28px;padding:0;border:0}
+h2{font-size:22px;line-height:1.5;font-weight:700;margin:46px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-size:18px;line-height:1.5;font-weight:700;margin:32px 0 10px}
+h4{font-size:16px;line-height:1.5;font-weight:700;margin:24px 0 8px}
+h2+h3,h3+h4{margin-top:16px}
+p{margin:0 0 1.05em}
+strong{font-weight:650}
+em{font-style:normal;color:var(--muted)}
+ul,ol{margin:0 0 1.1em;padding-left:1.6em}
+li{margin:0 0 .35em}li>p{margin-bottom:.4em}li>ul,li>ol{margin-top:.3em;margin-bottom:0}
+hr{border:0;border-top:1px solid var(--line);margin:32px 0}
+
+/* 記事冒頭・末尾のナビ（前回｜次回｜目次） */
+article>blockquote:first-of-type{margin:0 0 26px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:13.5px;color:var(--muted)}
+article>blockquote:first-of-type p{margin:0}
+
+/* 冒頭の結論文（h1 直後の太字だけの段落）と、節冒頭の「対象：…」行（h3 直後の太字だけの段落） */
+h1+p:has(>strong:only-child){font-size:17px;line-height:1.7;margin:14px 0 30px;padding:2px 0 2px 16px;border-left:3px solid var(--accent)}
+h3+p:has(>strong:only-child){font-size:13.5px;color:var(--muted);margin:-2px 0 14px}
+h3+p:has(>strong:only-child) strong{font-weight:600}
+
+/* 引用・強調ブロック */
+blockquote{margin:22px 0;padding:2px 0 2px 18px;border-left:3px solid var(--accent);color:var(--ink);background:transparent}
+blockquote p:last-child{margin:0}
+
+/* 図版：SVGは幅1000px基準で描かれているため、本文カラム幅までに収め、小さな画面では全幅にする */
+img{display:block;max-width:100%;width:min(100%,720px);height:auto;margin:26px auto 6px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:10px}
+figure{margin:28px 0}
+figcaption,p:has(>em:only-child){font-size:13.5px;line-height:1.65;color:var(--muted);text-align:center;margin:4px auto 22px;max-width:680px}
+p:has(>em:only-child)+p:has(>em:only-child){margin-top:-14px}
+
+/* 表 */
+/* 表は内容幅に収め、長い表だけ本文幅まで広がる。本文幅を超える場合はラッパー内で横スクロール */
+.table-wrap{width:fit-content;max-width:100%;overflow-x:auto;margin:18px 0 24px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:auto;max-width:100%;margin:0;font-size:14px;line-height:1.6}
+thead{background:var(--soft)}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:650;white-space:nowrap;color:var(--ink)}
+tbody tr:nth-child(even){background:var(--table-stripe)}
+td[rowspan]{background:var(--card);border-right:1px solid var(--line);vertical-align:middle}
+.table-grid{font-size:13.5px}.table-grid th,.table-grid td{padding:9px 6px}.table-grid td:first-child{white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td[style*="right"],th[style*="right"]{font-variant-numeric:tabular-nums}
+
+/* コード */
+pre{padding:16px 18px;background:var(--soft);border:1px solid var(--line);border-radius:8px;overflow:auto;font-size:13.5px;line-height:1.6;margin:18px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+p code,li code,td code{background:var(--soft);padding:1px 5px;border-radius:4px}
+
+/* 数式（MathML） */
+/* 数式：ブロック数式は左寄せ＋インデント、背景なし。複数行の式は先頭が揃う */
+math{font-family:"STIX Two Math","Cambria Math","Latin Modern Math",math;font-size:1.06em;line-height:normal}
+math[display=block]{display:block;overflow-x:auto;overflow-y:hidden;text-align:left;font-size:1.12em;line-height:1.6;padding:6px 0 6px 1.5em;margin:.8em 0 1em;background:transparent;border-radius:0}
+math[display=block]+math[display=block]{margin-top:-.4em}
+math[display=block] mfrac{padding:0 .1em}
+math[display=block]+p{margin-top:0}
+
+/* 脚注・フッター */
+.footnotes{font-size:13px;color:var(--muted);line-height:1.8;margin-top:32px}.footnotes ol{padding-left:20px}
+.footnote-ref{text-decoration:none;font-size:.8em}.footnote-ref sup{vertical-align:super}
+footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:20px;margin-top:56px;line-height:1.7}
+.eyebrow{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:700}
+.skip{position:absolute;left:10px;top:-100px;background:var(--paper);z-index:5;padding:10px}.skip:focus{top:10px}
+
+/* 目次ドロワー（CSSのみ。JavaScript不使用） */
+.toc-state{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.toc-toggle{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font-weight:600;font-size:13px;line-height:1;cursor:pointer;user-select:none;transition:border-color .15s,color .15s}
+.toc-toggle:hover{border-color:var(--accent);color:var(--accent)}.toc-toggle svg{width:15px;height:15px}
+body:has(.toc-state:focus-visible) .toc-toggle{outline:3px solid var(--accent);outline-offset:3px}
+.toc-backdrop{position:fixed;inset:0;z-index:20;background:rgba(8,18,24,.38);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.toc-drawer{position:fixed;top:0;right:0;z-index:21;display:flex;flex-direction:column;width:min(360px,100%);height:100dvh;background:var(--paper);border-left:1px solid var(--line);box-shadow:-18px 0 48px rgba(0,0,0,.18);font-size:14px;transform:translateX(100%);visibility:hidden;transition:transform .22s ease,visibility .22s}
+body:has(.toc-state:checked){overflow:hidden}
+body:has(.toc-state:checked) .toc-backdrop{opacity:1;visibility:visible}
+body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
+.toc-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 14px 12px 24px;border-bottom:1px solid var(--line)}
+.toc-drawer-head strong{font-size:14px;letter-spacing:.06em}
+.toc-close{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;color:var(--muted);cursor:pointer}
+.toc-close:hover{background:var(--soft);color:var(--ink)}.toc-close svg{width:18px;height:18px}
+.toc-drawer nav{flex:1;display:grid;align-content:start;gap:2px;padding:12px;overflow:auto}
+.toc-cour{padding:12px 12px 4px;font-size:12px;letter-spacing:.08em;font-weight:700;color:var(--accent)}
+.toc-part{padding:8px 12px 2px;font-size:12px;color:var(--muted)}
+.chapter-link{display:flex;gap:12px;text-decoration:none;padding:9px 12px;border-radius:8px;color:var(--muted);line-height:1.55}
+.chapter-link span{flex:0 0 24px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--accent)}
+.chapter-link:hover{background:var(--soft);color:var(--ink)}
+.chapter-link.current{background:var(--soft);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.toc-drawer-foot{padding:14px 24px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.7}.toc-drawer-foot p{margin:0 0 8px}
+
+@media(prefers-reduced-motion:reduce){.toc-drawer,.toc-backdrop,.toc-toggle{transition:none}html{scroll-behavior:auto}}
+@media(prefers-color-scheme:dark){:root{--paper:#171f26;--card:#1e2930;--ink:#e6ecea;--muted:#a9b7b5;--accent:#7cc4e8;--line:#33434a;--soft:#222f37;--table-stripe:#1c272e}img{background:#f8f7f2;border-color:#4a5a62}}
+@media(max-width:940px){.layout{padding:22px 20px 60px}main{max-width:none}.topbar{padding:11px 18px}}
+@media(max-width:600px){.table-wrap{border-radius:6px}.brand{font-size:15px}.brand span{display:none}body{font-size:15.5px;line-height:1.75}h1{font-size:25px}h2{font-size:20px}h3{font-size:17px}.topbar-actions{gap:12px;font-size:13px}.toc-toggle{padding:6px 11px}.layout{padding-left:16px;padding-right:16px}img{width:100%;padding:4px}th,td{padding:8px 9px}table{font-size:13.5px}math[display=block]{font-size:1.02em;padding-left:.75em}}
+@media print{.topbar,aside,.toc-backdrop,.skip,footer{display:none}.layout{display:block;padding:0}main{max-width:none}body{background:white;color:black;font-size:11pt}h1{font-size:20pt}h2,h3{break-after:avoid}img{max-height:16cm;break-inside:avoid;border:0}a{color:inherit}pre,math[display=block]{overflow:visible}p{orphans:3;widows:3}.table-wrap{overflow:visible;border:0}}
+/* 脚注（pandoc footnotes）。medium-specificity と同じ体裁 */
+.footnotes hr{display:none}
+</style></head><body>
+<a class="skip" href="#main">本文へ移動</a>
+<input type="checkbox" id="toc-state" class="toc-state" aria-label="目次を開く">
+<header class="topbar"><a href="#" class="brand">React／Frontendにおける単体テストと結合テストの境界<span>FRONTEND TEST LEVELS</span></a><div class="topbar-actions"><label class="toc-toggle" for="toc-state"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>目次</label></div></header>
+<label class="toc-backdrop" for="toc-state" aria-hidden="true"></label>
+<aside class="toc-drawer" aria-label="記事の目次"><div class="toc-drawer-head"><strong>記事の目次</strong><label class="toc-close" for="toc-state" title="閉じる"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></label></div><nav aria-label="記事の目次"><a class="chapter-link" href="#単体テストと結合テストの境界をどう定義するか"><span>01</span>単体テストと結合テストの境界をどう定義するか</a><a class="chapter-link" href="#境界はどこにあるか顧客検索画面の例"><span>02</span>境界はどこにあるか：顧客検索画面の例</a><a class="chapter-link" href="#ブラウザを使用するかどうかは別の分類軸"><span>03</span>ブラウザを使用するかどうかは別の分類軸</a><a class="chapter-link" href="#frontend単体テストの8種別"><span>04</span>Frontend単体テストの8種別</a><a class="chapter-link" href="#テストレベルとテスト種別のマトリクス"><span>05</span>テストレベルとテスト種別のマトリクス</a><a class="chapter-link" href="#受託開発の工程へのマッピング"><span>06</span>受託開発の工程へのマッピング</a><a class="chapter-link" href="#推奨技術スタックとテストアーキテクチャ"><span>07</span>推奨技術スタックとテストアーキテクチャ</a><a class="chapter-link" href="#ai駆動開発におけるテスト生成の単位skill案"><span>08</span>AI駆動開発におけるテスト生成の単位（Skill案）</a><a class="chapter-link" href="#おわりにfrontend単体テストの完了を何で判断するか"><span>09</span>おわりに：Frontend単体テストの完了を何で判断するか</a></nav><div class="toc-drawer-foot"><a href="#参考文献注記">参考文献・注記</a><br><a href="offline.html" download>単一HTML（オフライン閲覧用）</a></div></aside>
+<div class="layout"><main id="main" tabindex="-1"><article><h1 id="reactfrontendにおける単体テストと結合テストの境界">React／Frontendにおける単体テストと結合テストの境界</h1>
+<p><strong>Frontendのテストは、単体テストと結合テストの間にFrontend内部結合テストを置いた4段階で分ける。境界は、使う道具や実行環境ではなく、個別の責務を検証するのか、責務間の連携を検証するのかで引く。</strong></p>
+<h2 id="単体テストと結合テストの境界をどう定義するか">1. 単体テストと結合テストの境界をどう定義するか</h2>
+<p>Reactを用いたFrontend開発では、テスト対象の大きさ、実行環境、依存先との接続範囲を分けて考える必要があります。</p>
+<p>コンポーネント単位だから単体テスト、ブラウザを使用するから結合テスト、という分類は適切ではありません。コンポーネントの大きさ、ブラウザという実行環境、Backendへの接続の有無は、それぞれ別の軸だからです。この3つが混ざったままだと、同じテストを単体と呼ぶ人と結合と呼ぶ人が出て、どの工程で何を保証したのかが判断できなくなります。</p>
+<p>受託開発の工程として整理するなら、依存先との接続範囲によって、次の4段階に分けることを推奨します。外側に進むほど、実際のシステム構成に近づきます。<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>テスト区分</th>
+<th>検証対象</th>
+<th>API接続</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontend単体テスト（FE単体）</td>
+<td>関数、Hooks、コンポーネントなど、個別の責務</td>
+<td>なし／Mock</td>
+</tr>
+<tr>
+<td>Frontend内部結合テスト（FE内部結合）</td>
+<td>複数のコンポーネント、状態管理、画面、ルーティングの連携</td>
+<td>原則Mock</td>
+</tr>
+<tr>
+<td>Frontend・Backend結合テスト（FE・BE結合）</td>
+<td>API通信、データ連携、認証認可、永続化</td>
+<td>実API</td>
+</tr>
+<tr>
+<td>システムテスト（ST）</td>
+<td>業務シナリオ、システム全体としての要求充足</td>
+<td>実API／外部接続等</td>
+</tr>
+</tbody>
+</table></div>
+<p>Hooksは、Reactで状態や副作用をコンポーネントから切り出す仕組みです。Mockは、MSW（Mock Service Worker。ブラウザやNode.jsでHTTP応答を模擬するライブラリ）などでAPIの応答を模擬することを指します。</p>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjM1OCIgdmlld0JveD0iMCAwIDEwMDAgMzU4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IjTmrrXpmo7jga7jg4bjgrnjg4jjg6zjg5njg6vjgahBUEnmjqXntpoiIGFyaWEtZGVzY3JpYmVkYnk9ImRlc2MiPgo8ZGVzYyBpZD0iZGVzYyI+RkXljZjkvZPjgIFGReWGhemDqOe1kOWQiOOAgUZF44O7QkXntZDlkIjjgIFTVO+8iOOCt+OCueODhuODoOODhuOCueODiO+8ieOBrjTmrrXpmo7jgpLlt6bjgYvjgonlj7Pjgbgx5pys44Gu55+i5Y2w44Gn44Gk44Gq44GO44CB44Gd44KM44Ge44KM44Gu5LiL44Gr44CM5YCL5Yil44Gu6LKs5YuZ77yIQVBJ5o6l57aa77ya44Gq44GX77yPTW9ja++8ieOAjeOAjOiyrOWLmemWk+OBrumAo+aQuu+8iEFQSeaOpee2mu+8muWOn+WJh01vY2vvvInjgI3jgIzlrp9BUEnjgajjga7pgKPmkLrvvIhBUEnmjqXntprvvJrlrp9BUEnvvInjgI3jgIzmpa3li5njgrfjg4rjg6rjgqrvvIhBUEnmjqXntprvvJrlrp9BUEnvvIvlpJbpg6jmjqXntprvvInjgI3jgpLnva7jgY3jgIHlt6Yy5YiX44KS44CMQmFja2VuZOOBruWujOaIkOOCkuW+heOBn+OBmuOBq+Wun+aWveOBp+OBjeOCi+OAjeOAgeWPszLliJfjgpLjgIzlrp9CYWNrZW5k44GM6KaB44KL44CN44Gu44OW44Op44Kx44OD44OI44Gn5ous44Gj44Gf5ZuzPC9kZXNjPgo8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmNmZGZkIi8+Cjx0ZXh0IHg9IjUwIiB5PSI1MCIgdGV4dC1hbmNob3I9InN0YXJ0IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzE4MzI0YiI+5Y2Y5L2T44Go57WQ5ZCI44Gu6ZaT44GrRkXlhoXpg6jntZDlkIjjgpLnva7jgY3jgIFCYWNrZW5k44Gu5a6M5oiQ44KS5b6F44Gf44Ga44Gr6YCy44KB44KLPC90ZXh0Pgo8cGF0aCBkPSJNMTY1LjUgMTE1LjAgTDk1Mi4wIDExNS4wIiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIvPjxwb2x5Z29uIHBvaW50cz0iOTYyLjAsMTE1LjAgOTUwLjAsMTIyLjAgOTUwLjAsMTA4LjAiIGZpbGw9IiM2MDdhOTEiLz48cmVjdCB4PSI2MCIgeT0iOTYiIHdpZHRoPSIyMTEiIGhlaWdodD0iMzgiIHJ4PSIxOS4wIiBmaWxsPSIjZTFlZGY4IiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjE2NiIgeT0iMTIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+RkXljZjkvZM8L3RleHQ+PHJlY3QgeD0iMjgzIiB5PSI5NiIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlOWU0ZjUiIHN0cm9rZT0iIzhhNmNjMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMzg4IiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjNmE0ZWE2Ij5GReWGhemDqOe1kOWQiDwvdGV4dD48cmVjdCB4PSI1MDYiIHk9Ijk2IiB3aWR0aD0iMjExIiBoZWlnaHQ9IjM4IiByeD0iMTkuMCIgZmlsbD0iI2VlZjNmMSIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI2MTIiIHk9IjEyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyMjNlNTMiPkZF44O7QkXntZDlkIg8L3RleHQ+PHJlY3QgeD0iNzI5IiB5PSI5NiIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iODM0IiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5TVO+8iOOCt+OCueODhuODoOODhuOCueODiO+8iTwvdGV4dD4KPHJlY3QgeD0iNjAiIHk9IjE2MCIgd2lkdGg9IjIxMSIgaGVpZ2h0PSI3MCIgcng9IjEyIiBmaWxsPSIjZTFlZGY4IiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjE2NiIgeT0iMTkxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNyIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+5YCL5Yil44Gu6LKs5YuZPC90ZXh0Pjx0ZXh0IHg9IjE2NiIgeT0iMjE1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+QVBJ5o6l57aa77ya44Gq44GX77yPTW9jazwvdGV4dD4KPHJlY3QgeD0iMjgzIiB5PSIxNjAiIHdpZHRoPSIyMTEiIGhlaWdodD0iNzAiIHJ4PSIxMiIgZmlsbD0iI2U5ZTRmNSIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIzODgiIHk9IjE5MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTciIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM2YTRlYTYiPuiyrOWLmemWk+OBrumAo+aQujwvdGV4dD48dGV4dCB4PSIzODgiIHk9IjIxNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPkFQSeaOpee2mu+8muWOn+WJh01vY2s8L3RleHQ+CjxyZWN0IHg9IjUwNiIgeT0iMTYwIiB3aWR0aD0iMjExIiBoZWlnaHQ9IjcwIiByeD0iMTIiIGZpbGw9IiNmN2U5ZDQiIHN0cm9rZT0iI2MwNjA0YSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNjEyIiB5PSIxOTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE3IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOWMzZjJhIj7lrp9BUEnjgajjga7pgKPmkLo8L3RleHQ+PHRleHQgeD0iNjEyIiB5PSIyMTUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5BUEnmjqXntprvvJrlrp9BUEk8L3RleHQ+CjxyZWN0IHg9IjcyOSIgeT0iMTYwIiB3aWR0aD0iMjExIiBoZWlnaHQ9IjcwIiByeD0iMTIiIGZpbGw9IiNmN2U5ZDQiIHN0cm9rZT0iI2MwNjA0YSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iODM0IiB5PSIxOTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE3IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOWMzZjJhIj7mpa3li5njgrfjg4rjg6rjgqo8L3RleHQ+PHRleHQgeD0iODM0IiB5PSIyMTUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5BUEnmjqXntprvvJrlrp9BUEnvvIvlpJbpg6jmjqXntpo8L3RleHQ+CjxwYXRoIGQ9Ik02MC4wIDI2NCBWMjUyIEg0OTQuMCBWMjY0IiBzdHJva2U9IiMyZjZiNDUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjI3NyIgeT0iMjg1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJmNmI0NSI+QmFja2VuZOOBruWujOaIkOOCkuW+heOBn+OBmuOBq+Wun+aWveOBp+OBjeOCizwvdGV4dD4KPHBhdGggZD0iTTUwNi4wIDI2NCBWMjUyIEg5NDAuMCBWMjY0IiBzdHJva2U9IiM5YzNmMmEiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjcyMyIgeT0iMjg1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzljM2YyYSI+5a6fQmFja2VuZOOBjOimgeOCizwvdGV4dD4KPHRleHQgeD0iNTAwIiB5PSIzMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTU2NDZkIj7ljLrliIbjgpLmsbrjgoHjgovjga7jga/jgIHjg4bjgrnjg4jlr77osaHjga7lpKfjgY3jgZXjgoTkvb/jgYbpgZPlhbfjgafjga/jgarjgY/jgIHkvp3lrZjlhYjjgajjga7mjqXntprnr4Tlm7I8L3RleHQ+Cjwvc3ZnPgo=" alt="4段階のテストレベルとAPI接続" />
+<figcaption aria-hidden="true">4段階のテストレベルとAPI接続</figcaption>
+</figure>
+<p>重要なのは、従来の開発における「単体テスト→結合テスト」という2段階の間に、<strong>Frontend内部結合テストという独立した区分を設けること</strong>です。</p>
+<p>Frontend内部結合テストは、Backendの完成を待たずに実施できます。</p>
+<h2 id="境界はどこにあるか顧客検索画面の例">2. 境界はどこにあるか：顧客検索画面の例</h2>
+<p>例えば、顧客検索画面を考えます。この画面は、検索フォーム（SearchForm）と検索結果テーブル（CustomerTable）の2つのコンポーネント、検索条件の状態を持つカスタムHook（useCustomerSearch）、入力制約を定義するバリデーションSchemaとデータ変換の関数、Backendと通信するAPI Clientからできています。</p>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjQ4NCIgdmlld0JveD0iMCAwIDEwMDAgNDg0IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9Iumhp+WuouaknOe0oueUu+mdouOBruani+aIkOOBqOaknOiovOOBruevhOWbsiIgYXJpYS1kZXNjcmliZWRieT0iZGVzYyI+CjxkZXNjIGlkPSJkZXNjIj5DdXN0b21lclNlYXJjaFBhZ2XvvIjpoaflrqLmpJzntKLnlLvpnaLvvInjga7mnqDjga7kuK3jgavjgIHkuIrmrrXjgIxTZWFyY2hGb3Jt77yI5qSc57Si44OV44Kp44O844Og77ya6aGn5a6i5ZCN44O75Yy65YiG77yJ44CN44CMQ3VzdG9tZXJUYWJsZe+8iOaknOe0oue1kOaenO+8muS4gOimp+ODu+S7tuaVsO+8ieOAjeOAgeS4i+auteOAjFNjaGVtYeODu+WkieaPm+mWouaVsO+8iOODkOODquODh+ODvOOCt+ODp+ODs+ODu+WkieaPm++8ieOAjeOAjOOCq+OCueOCv+ODoEhvb2vvvIh1c2VDdXN0b21lclNlYXJjaO+8ieOAjeOAjEFQSSBDbGllbnTvvIjjg6rjgq/jgqjjgrnjg4jjg7vlv5znrZTlh6bnkIbvvInjgI3jga7nrrHjgpLnva7jgY3jgIHnrrHlkIzlo6vjgpLntKvjga7nt5rjgafjgIFBUEkgQ2xpZW5044Go5p6g5aSW44Gu44CMQmFja2VuZCBBUEnvvI9EYXRhYmFzZeOAjeOCkuapmeOBrue3muOBp+e1kOOBs+OAgeWPs+OBq+OAjOWNmOS9k+ODhuOCueODiO+8mueuseOBruS4re+8iOWAi+WIpeOBruiyrOWLme+8ieOAjeOAjEZF5YaF6YOo57WQ5ZCI44OG44K544OI77ya566x44Go566x44Gu6ZaT77yI6LKs5YuZ6ZaT44Gu6YCj5pC677yJ44CN44CMRkXjg7tCRee1kOWQiOODhuOCueODiO+8mkJhY2tlbmTjgajjga7nt5rvvIjlrp9BUEnvvInjgI3jga7lh6HkvovjgpLnva7jgYTjgZ/lm7M8L2Rlc2M+CjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmY2ZkZmQiLz4KPHRleHQgeD0iNTAiIHk9IjUwIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMTgzMjRiIj7nrrHjga7kuK3jga/ljZjkvZPjgIHnrrHjgajnrrHjga7plpPjga9GReWGhemDqOe1kOWQiOOAgUJhY2tlbmTjgajjga7nt5rjga9GReODu0JF57WQ5ZCIPC90ZXh0Pgo8cmVjdCB4PSI2MCIgeT0iOTAiIHdpZHRoPSI1ODAiIGhlaWdodD0iMjUwIiByeD0iMTIiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjgwIiB5PSIxMTQiIHRleHQtYW5jaG9yPSJzdGFydCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyMjNlNTMiPkN1c3RvbWVyU2VhcmNoUGFnZe+8iOmhp+WuouaknOe0oueUu+mdou+8iTwvdGV4dD4KPHBhdGggZD0iTTIxMS4wIDIxMC4wIEwzNTAuMCAyNTAuMCIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTQ4OS4wIDIxMC4wIEwzNTAuMCAyNTAuMCIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTQzNS4wIDI4NS4wIEw0NTAuMCAyODUuMCIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTI1MC4wIDI4NS4wIEwyNjUuMCAyODUuMCIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTUzNS4wIDMyMC4wIEw1MzUuMCAzNjYuMCIgc3Ryb2tlPSIjYzA2MDRhIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz4KPHJlY3QgeD0iODAiIHk9IjEyNiIgd2lkdGg9IjI2MiIgaGVpZ2h0PSI4NCIgcng9IjEyIiBmaWxsPSIjZTFlZGY4IiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjIxMSIgeT0iMTY0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNyIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+U2VhcmNoRm9ybTwvdGV4dD48dGV4dCB4PSIyMTEiIHk9IjE4OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuaknOe0ouODleOCqeODvOODoO+8mumhp+WuouWQjeODu+WMuuWIhjwvdGV4dD4KPHJlY3QgeD0iMzU4IiB5PSIxMjYiIHdpZHRoPSIyNjIiIGhlaWdodD0iODQiIHJ4PSIxMiIgZmlsbD0iI2UxZWRmOCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI0ODkiIHk9IjE2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTciIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPkN1c3RvbWVyVGFibGU8L3RleHQ+PHRleHQgeD0iNDg5IiB5PSIxODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7mpJzntKLntZDmnpzvvJrkuIDopqfjg7vku7bmlbA8L3RleHQ+CjxyZWN0IHg9IjgwIiB5PSIyNTAiIHdpZHRoPSIxNzAiIGhlaWdodD0iNzAiIHJ4PSIxMiIgZmlsbD0iI2UxZWRmOCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIxNjUiIHk9IjI4MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPlNjaGVtYeODu+WkieaPm+mWouaVsDwvdGV4dD48dGV4dCB4PSIxNjUiIHk9IjMwNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuODkOODquODh+ODvOOCt+ODp+ODs+ODu+WkieaPmzwvdGV4dD4KPHJlY3QgeD0iMjY1IiB5PSIyNTAiIHdpZHRoPSIxNzAiIGhlaWdodD0iNzAiIHJ4PSIxMiIgZmlsbD0iI2UxZWRmOCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIzNTAiIHk9IjI4MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPuOCq+OCueOCv+ODoEhvb2s8L3RleHQ+PHRleHQgeD0iMzUwIiB5PSIzMDUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj51c2VDdXN0b21lclNlYXJjaDwvdGV4dD4KPHJlY3QgeD0iNDUwIiB5PSIyNTAiIHdpZHRoPSIxNzAiIGhlaWdodD0iNzAiIHJ4PSIxMiIgZmlsbD0iI2UxZWRmOCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MzUiIHk9IjI4MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPkFQSSBDbGllbnQ8L3RleHQ+PHRleHQgeD0iNTM1IiB5PSIzMDUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7jg6rjgq/jgqjjgrnjg4jjg7vlv5znrZTlh6bnkIY8L3RleHQ+CjxyZWN0IHg9IjgwIiB5PSIzNjYiIHdpZHRoPSI1NDAiIGhlaWdodD0iNTAiIHJ4PSIxMiIgZmlsbD0iI2Y3ZTlkNCIgc3Ryb2tlPSIjYzA2MDRhIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1kYXNoYXJyYXk9IjggNiIvPjx0ZXh0IHg9IjM1MCIgeT0iMzk4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzljM2YyYSI+QmFja2VuZCBBUEnvvI9EYXRhYmFzZTwvdGV4dD4KPHJlY3QgeD0iNjgwIiB5PSI5NiIgd2lkdGg9IjI2MCIgaGVpZ2h0PSI3MiIgcng9IjEyIiBmaWxsPSIjZTFlZGY4IiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjgxMCIgeT0iMTI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+5Y2Y5L2T44OG44K544OIPC90ZXh0Pjx0ZXh0IHg9IjgxMCIgeT0iMTUyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+566x44Gu5Lit77ya5YCL5Yil44Gu6LKs5YuZPC90ZXh0Pgo8cmVjdCB4PSI2ODAiIHk9IjE4NiIgd2lkdGg9IjI2MCIgaGVpZ2h0PSI3MiIgcng9IjEyIiBmaWxsPSIjZTllNGY1IiBzdHJva2U9IiM4YTZjYzEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjgxMCIgeT0iMjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzZhNGVhNiI+RkXlhoXpg6jntZDlkIjjg4bjgrnjg4g8L3RleHQ+PHRleHQgeD0iODEwIiB5PSIyNDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7nrrHjgajnrrHjga7plpPvvJrosqzli5nplpPjga7pgKPmkLo8L3RleHQ+CjxyZWN0IHg9IjY4MCIgeT0iMjc2IiB3aWR0aD0iMjYwIiBoZWlnaHQ9IjcyIiByeD0iMTIiIGZpbGw9IiNmN2U5ZDQiIHN0cm9rZT0iI2MwNjA0YSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iODEwIiB5PSIzMDQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOWMzZjJhIj5GReODu0JF57WQ5ZCI44OG44K544OIPC90ZXh0Pjx0ZXh0IHg9IjgxMCIgeT0iMzMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+QmFja2VuZOOBqOOBrue3mu+8muWun0FQSTwvdGV4dD4KPHRleHQgeD0iNTAwIiB5PSI0NTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTU2NDZkIj7jganjga7nrrHjgpLopovjgovjgYvjgafjga/jgarjgY/jgIHnrrHjga7kuK3jgYvjgIHnrrHjga7plpPjgYvjgIFCYWNrZW5k44Go44Gu57ea44GL44Gn5Yy65YiG44GM5rG644G+44KLPC90ZXh0Pgo8L3N2Zz4K" alt="顧客検索画面の構成と検証の範囲" />
+<figcaption aria-hidden="true">顧客検索画面の構成と検証の範囲</figcaption>
+</figure>
+<p><strong>個別の責務を検証しているのか、複数の責務間の連携を検証しているのかが、単体テストとFrontend内部結合テストの境界になります。</strong></p>
+<p>図の箱の中、つまり1つのコンポーネントやHook、関数が自分の責務を果たしているかを見るのが単体テストです。箱と箱の間、つまり検索ボタンを押したら検索結果が表示される、といった複数の責務の連携を見るのがFrontend内部結合テストです。API ClientとBackendをつなぐ線を実際に通すのが、FE・BE結合テストです。</p>
+<p>この画面のテストを分類すると、次のようになります。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>テスト内容</th>
+<th>テスト区分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>顧客名の文字数チェック</td>
+<td>単体</td>
+</tr>
+<tr>
+<td>検索条件のデータ変換</td>
+<td>単体</td>
+</tr>
+<tr>
+<td>検索ボタンの活性・非活性制御</td>
+<td>単体</td>
+</tr>
+<tr>
+<td>検索結果テーブルの表示制御</td>
+<td>単体</td>
+</tr>
+<tr>
+<td>カスタムHookの状態遷移</td>
+<td>単体</td>
+</tr>
+<tr>
+<td>検索ボタン押下から検索結果表示まで</td>
+<td>FE内部結合</td>
+</tr>
+<tr>
+<td>検索条件とページネーションの連動</td>
+<td>FE内部結合</td>
+</tr>
+<tr>
+<td>APIエラー時の画面全体の表示制御</td>
+<td>FE内部結合</td>
+</tr>
+<tr>
+<td>検索画面から顧客詳細画面への遷移</td>
+<td>FE内部結合</td>
+</tr>
+<tr>
+<td>実APIへの検索条件の送信・応答</td>
+<td>FE・BE結合</td>
+</tr>
+<tr>
+<td>DB登録内容と画面表示内容の一致</td>
+<td>FE・BE結合</td>
+</tr>
+<tr>
+<td>顧客登録から契約成立までの業務フロー</td>
+<td>システム</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="ブラウザを使用するかどうかは別の分類軸">3. ブラウザを使用するかどうかは別の分類軸</h2>
+<p>Frontend開発では、テストレベルとテスト実行環境を分離して定義することが重要です。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>実行環境</th>
+<th>主なツール</th>
+<th>特徴</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js</td>
+<td>Vitest</td>
+<td>ロジック・状態管理の高速な検証</td>
+</tr>
+<tr>
+<td>仮想DOM</td>
+<td>Vitest、jsdom、Testing Library</td>
+<td>UIの表示・操作の検証</td>
+</tr>
+<tr>
+<td>実ブラウザ</td>
+<td>Vitest Browser Mode、Storybook、Playwright</td>
+<td>実際の描画・操作・ブラウザ挙動の検証</td>
+</tr>
+<tr>
+<td>実システム環境</td>
+<td>Playwright、MagicPod</td>
+<td>Backendを含むシステムの検証</td>
+</tr>
+</tbody>
+</table></div>
+<p>jsdomは、Node.js上でブラウザのDOMを模擬するライブラリです。Testing Libraryは、利用者から見える振る舞いでコンポーネントを検証するためのライブラリで、ReactではReact Testing Libraryを使います。Vitest Browser Modeは、Vitestのテストを実ブラウザ上で実行する機能です。<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> MagicPodは、実ブラウザや実機でのテストを自動化するクラウドサービスです。</p>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjQ3OCIgdmlld0JveD0iMCAwIDEwMDAgNDc4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IuODhuOCueODiOODrOODmeODq+OBqOWun+ihjOeSsOWig+OBrjLou7giIGFyaWEtZGVzY3JpYmVkYnk9ImRlc2MiPgo8ZGVzYyBpZD0iZGVzYyI+5qiq44GrRkXljZjkvZPjgIFGReWGhemDqOe1kOWQiOOAgUZF44O7QkXntZDlkIjjgIFTVO+8iOOCt+OCueODhuODoOODhuOCueODiO+8ieOBrjTmrrXpmo7jgIHnuKbjgatOb2RlLmpz77yIVml0ZXN077yJ44CB5Luu5oOzRE9N77yIanNkb23nrYnvvInjgIHlrp/jg5bjg6njgqbjgrbvvIhCcm93c2VyIE1vZGXnrYnvvInjgIHlrp/jgrfjgrnjg4bjg6DnkrDlooPvvIhQbGF5d3JpZ2h0562J77yJ44GuNOOBpOOBruWun+ihjOeSsOWig+OCkue9ruOBhOOBn+agvOWtkOOBruWbs+OAgkZF5Y2Y5L2Tw5flrp/jg5bjg6njgqbjgrbjgavjgIxQbGF5d3JpZ2h044Gn44Kz44Oz44Od44O844ON44Oz44OI44Gg44GR44CN44CBRkXlhoXpg6jntZDlkIjDl+S7ruaDs0RPTeOBq+OAjFZpdGVzdO+8i2pzZG9t44Gn55S76Z2i5YWo5L2T44Gu6YCj5pC644CN44KS5by36Kq/44GX44Gm572u44GN44CB44G744GL44GrRkXljZjkvZPDl05vZGUuanPjgavjgIzjg63jgrjjg4Pjgq/jg7tTdG9yZeOAjeOAgUZF5Y2Y5L2Tw5fku67mg7NET03jgavjgIzjgrPjg7Pjg53jg7zjg43jg7Pjg4jjgI3jgIFGReWGhemDqOe1kOWQiMOX5a6f44OW44Op44Km44K244Gr44CM55S76Z2i6YG356e744CN44CBRkXjg7tCRee1kOWQiMOX5a6f44K344K544OG44Og55Kw5aKD44Gr44CM5a6fQVBJ44Go44Gu57WQ5ZCI44CN44CBU1TDl+Wun+OCt+OCueODhuODoOeSsOWig+OBq+OAjOalreWLmeOCt+ODiuODquOCquOAjeOCkue9ruOBhOOBpuOBhOOCizwvZGVzYz4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZjZmRmZCIvPgo8dGV4dCB4PSI1MCIgeT0iNTAiIHRleHQtYW5jaG9yPSJzdGFydCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxODMyNGIiPuWun+ihjOeSsOWig+OBr+ODhuOCueODiOODrOODmeODq+OCkuaxuuOCgeOBquOBhOOAguOBqeOBoeOCieOCguWIpeOAheOBq+mBuOOBtjwvdGV4dD4KPHBhdGggZD0iTTMwNS41IDExNS4wIEw5NTIuMCAxMTUuMCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz48cG9seWdvbiBwb2ludHM9Ijk2Mi4wLDExNS4wIDk1MC4wLDEyMi4wIDk1MC4wLDEwOC4wIiBmaWxsPSIjNjA3YTkxIi8+PHJlY3QgeD0iMjIwIiB5PSI5NiIgd2lkdGg9IjE3MSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMzA2IiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj5GReWNmOS9kzwvdGV4dD48cmVjdCB4PSI0MDMiIHk9Ijk2IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjM4IiByeD0iMTkuMCIgZmlsbD0iI2U5ZTRmNSIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI0ODgiIHk9IjEyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM2YTRlYTYiPkZF5YaF6YOo57WQ5ZCIPC90ZXh0PjxyZWN0IHg9IjU4NiIgeT0iOTYiIHdpZHRoPSIxNzEiIGhlaWdodD0iMzgiIHJ4PSIxOS4wIiBmaWxsPSIjZWVmM2YxIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjY3MiIgeT0iMTIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzIyM2U1MyI+RkXjg7tCRee1kOWQiDwvdGV4dD48cmVjdCB4PSI3NjkiIHk9Ijk2IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjM4IiByeD0iMTkuMCIgZmlsbD0iI2VlZjNmMSIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI4NTQiIHk9IjEyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyMjNlNTMiPlNU77yI44K344K544OG44Og44OG44K544OI77yJPC90ZXh0Pgo8dGV4dCB4PSIxMzUiIHk9IjExMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM1NTY0NmQiPuaoqu+8muODhuOCueODiOODrOODmeODqzwvdGV4dD48dGV4dCB4PSIxMzUiIHk9IjEzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM1NTY0NmQiPue4pu+8muWun+ihjOeSsOWigzwvdGV4dD4KPHJlY3QgeD0iNjAiIHk9IjE1MCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI2MCIgcng9IjEyIiBmaWxsPSIjZWVmM2YxIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjEzNSIgeT0iMTc2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzIyM2U1MyI+Tm9kZS5qczwvdGV4dD48dGV4dCB4PSIxMzUiIHk9IjIwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPlZpdGVzdDwvdGV4dD4KPHJlY3QgeD0iMjIwIiB5PSIxNTAiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSI0MDMiIHk9IjE1MCIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI2MCIgcng9IjYiIGZpbGw9IiNmY2ZkZmQiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+CjxyZWN0IHg9IjU4NiIgeT0iMTUwIiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjYwIiByeD0iNiIgZmlsbD0iI2ZjZmRmZCIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHJlY3QgeD0iNzY5IiB5PSIxNTAiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSI2MCIgeT0iMjE4IiB3aWR0aD0iMTUwIiBoZWlnaHQ9IjYwIiByeD0iMTIiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMTM1IiB5PSIyNDQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj7ku67mg7NET008L3RleHQ+PHRleHQgeD0iMTM1IiB5PSIyNjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5qc2RvbeetiTwvdGV4dD4KPHJlY3QgeD0iMjIwIiB5PSIyMTgiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSI0MDMiIHk9IjIxOCIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI2MCIgcng9IjYiIGZpbGw9IiNmY2ZkZmQiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+CjxyZWN0IHg9IjU4NiIgeT0iMjE4IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjYwIiByeD0iNiIgZmlsbD0iI2ZjZmRmZCIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHJlY3QgeD0iNzY5IiB5PSIyMTgiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSI2MCIgeT0iMjg2IiB3aWR0aD0iMTUwIiBoZWlnaHQ9IjYwIiByeD0iMTIiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMTM1IiB5PSIzMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj7lrp/jg5bjg6njgqbjgrY8L3RleHQ+PHRleHQgeD0iMTM1IiB5PSIzMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5Ccm93c2VyIE1vZGXnrYk8L3RleHQ+CjxyZWN0IHg9IjIyMCIgeT0iMjg2IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjYwIiByeD0iNiIgZmlsbD0iI2ZjZmRmZCIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHJlY3QgeD0iNDAzIiB5PSIyODYiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSI1ODYiIHk9IjI4NiIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI2MCIgcng9IjYiIGZpbGw9IiNmY2ZkZmQiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+CjxyZWN0IHg9Ijc2OSIgeT0iMjg2IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjYwIiByeD0iNiIgZmlsbD0iI2ZjZmRmZCIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHJlY3QgeD0iNjAiIHk9IjM1NCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI2MCIgcng9IjEyIiBmaWxsPSIjZWVmM2YxIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjEzNSIgeT0iMzgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzIyM2U1MyI+5a6f44K344K544OG44Og55Kw5aKDPC90ZXh0Pjx0ZXh0IHg9IjEzNSIgeT0iNDA0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+UGxheXdyaWdodOetiTwvdGV4dD4KPHJlY3QgeD0iMjIwIiB5PSIzNTQiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSI0MDMiIHk9IjM1NCIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI2MCIgcng9IjYiIGZpbGw9IiNmY2ZkZmQiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+CjxyZWN0IHg9IjU4NiIgeT0iMzU0IiB3aWR0aD0iMTcxIiBoZWlnaHQ9IjYwIiByeD0iNiIgZmlsbD0iI2ZjZmRmZCIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHJlY3QgeD0iNzY5IiB5PSIzNTQiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZmNmZGZkIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8cmVjdCB4PSIyMjAiIHk9IjI4NiIgd2lkdGg9IjE3MSIgaGVpZ2h0PSI2MCIgcng9IjYiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjMwNiIgeT0iMzEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+UGxheXdyaWdodOOBpzwvdGV4dD48dGV4dCB4PSIzMDYiIHk9IjMzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPuOCs+ODs+ODneODvOODjeODs+ODiOOBoOOBkTwvdGV4dD4KPHJlY3QgeD0iNDAzIiB5PSIyMTgiIHdpZHRoPSIxNzEiIGhlaWdodD0iNjAiIHJ4PSI2IiBmaWxsPSIjZTllNGY1IiBzdHJva2U9IiM4YTZjYzEiIHN0cm9rZS13aWR0aD0iMSIvPgo8dGV4dCB4PSI0ODgiIHk9IjI0NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM2YTRlYTYiPlZpdGVzdO+8i2pzZG9t44GnPC90ZXh0Pjx0ZXh0IHg9IjQ4OCIgeT0iMjYyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzZhNGVhNiI+55S76Z2i5YWo5L2T44Gu6YCj5pC6PC90ZXh0Pgo8dGV4dCB4PSIzMDYiIHk9IjE4NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuODreOCuOODg+OCr+ODu1N0b3JlPC90ZXh0Pgo8dGV4dCB4PSIzMDYiIHk9IjI1MyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuOCs+ODs+ODneODvOODjeODs+ODiDwvdGV4dD4KPHRleHQgeD0iNDg4IiB5PSIzMjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7nlLvpnaLpgbfnp7s8L3RleHQ+Cjx0ZXh0IHg9IjY3MiIgeT0iMzg5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+5a6fQVBJ44Go44Gu57WQ5ZCIPC90ZXh0Pgo8dGV4dCB4PSI4NTQiIHk9IjM4OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPualreWLmeOCt+ODiuODquOCqjwvdGV4dD4KPHRleHQgeD0iNTAwIiB5PSI0NTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTU2NDZkIj7lrp/jg5bjg6njgqbjgrbjgpLkvb/jgaPjgabjgoLlr77osaHjgYzjgrPjg7Pjg53jg7zjg43jg7Pjg4jjgaDjgZHjgarjgonljZjkvZPjgIJWaXRlc3TjgafjgoLpgKPmkLrjgpLopovjgozjgbDlhoXpg6jntZDlkIg8L3RleHQ+Cjwvc3ZnPgo=" alt="テストレベルと実行環境の2軸" />
+<figcaption aria-hidden="true">テストレベルと実行環境の2軸</figcaption>
+</figure>
+<p>Playwrightを使用したとしても、コンポーネントだけを対象としていれば単体レベルのテストです。<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>逆に、Vitestを使用して複数のコンポーネントと状態管理の連携を検証する場合は、Frontend内部結合テストになります。</p>
+<p>以降の章では、テストレベルは4段階、実行環境はそれとは別の軸として扱います。</p>
+<h2 id="frontend単体テストの8種別">4. Frontend単体テストの8種別</h2>
+<p>Frontend単体テストは、テスト対象によって次の8種類に分類できます。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>テスト種別</th>
+<th>主な対象</th>
+<th>推奨ツール</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ロジックテスト</td>
+<td>純粋関数、計算、データ変換</td>
+<td>Vitest</td>
+</tr>
+<tr>
+<td>2</td>
+<td>バリデーションテスト</td>
+<td>入力制約、Schema</td>
+<td>Vitest、Zod</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Hooksテスト</td>
+<td>カスタムHook、副作用、状態遷移</td>
+<td>Vitest、Testing Library</td>
+</tr>
+<tr>
+<td>4</td>
+<td>状態管理テスト</td>
+<td>Store、Action、Reducer、Selector</td>
+<td>Vitest</td>
+</tr>
+<tr>
+<td>5</td>
+<td>コンポーネント表示テスト</td>
+<td>Props、条件分岐、表示内容</td>
+<td>Testing Library、Storybook</td>
+</tr>
+<tr>
+<td>6</td>
+<td>コンポーネント操作テスト</td>
+<td>入力、クリック、イベント</td>
+<td>Testing Library、Storybook</td>
+</tr>
+<tr>
+<td>7</td>
+<td>APIクライアントテスト</td>
+<td>リクエスト生成、応答処理</td>
+<td>Vitest、MSW</td>
+</tr>
+<tr>
+<td>8</td>
+<td>コンポーネント品質テスト</td>
+<td>視覚的品質、アクセシビリティ</td>
+<td>Storybook、Playwright、axe-core</td>
+</tr>
+</tbody>
+</table></div>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjQwOCIgdmlld0JveD0iMCAwIDEwMDAgNDA4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IjjnqK7liKXjgYzmpJzoqLzjgZnjgovnr4Tlm7IiIGFyaWEtZGVzY3JpYmVkYnk9ImRlc2MiPgo8ZGVzYyBpZD0iZGVzYyI+5bem44GL44KJ44CM57SU57KL44Gq5Yem55CG77ya4pGgIOODreOCuOODg+OCr+ODhuOCueODiOOAgeKRoSDjg5Djg6rjg4fjg7zjgrfjg6fjg7Pjg4bjgrnjg4jvvIjlr77osaHvvJrplqLmlbDjg7tTY2hlbWHvvInjgI3jgIznirbmhYvvvJrikaIgSG9va3Pjg4bjgrnjg4jjgIHikaMg54q25oWL566h55CG44OG44K544OI77yI5a++6LGh77yaSG9va+ODu1N0b3Jl77yJ44CN44CM44Kz44Oz44Od44O844ON44Oz44OI77ya4pGkIOihqOekuuODhuOCueODiOOAgeKRpSDmk43kvZzjg4bjgrnjg4jvvIjlr77osaHvvJpQcm9wc+ODu+OCpOODmeODs+ODiO+8ieOAjeOAjOmAmuS/oe+8muKRpiBBUEnjgq/jg6njgqTjgqLjg7Pjg4jjg4bjgrnjg4jvvIjlr77osaHvvJrjg6rjgq/jgqjjgrnjg4jjg7vlv5znrZTvvInjgI3jga405p6a44Gu44Kr44O844OJ44KS5Lim44G544CB44Gd44Gu5LiL44Gr5YWo5bmF44Gu5biv44CM4pGnIOOCs+ODs+ODneODvOODjeODs+ODiOWTgeizquODhuOCueODiO+8iOimluimmueahOWTgeizquODu+OCouOCr+OCu+OCt+ODk+ODquODhuOCo+ODu+ODrOOCueODneODs+OCt+ODluODu+OCreODvOODnOODvOODieaTjeS9nOODu+OCquODvOODkOODvOODleODreODvOOAgueoruWIpeOCkuaoquaWreOBl+OBpuimi+OCi++8ieOAjeOCkue9ruOBjeOAgeW3puOBi+OCieWPs+OBuOOBruefouWNsOOBq+OAjFVJ44GL44KJ6Zui44KM44Gf5Yem55CG77ya5pyA44KC6YCf44GP5a6J5a6a44CN44CMVUnjgavov5HjgYTjgI3jgIzlpJbpg6jjgajjga7looPnlYzjgI3jgajmt7vjgYjjgZ/lm7M8L2Rlc2M+CjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmY2ZkZmQiLz4KPHRleHQgeD0iNTAiIHk9IjUwIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMTgzMjRiIj4456iu5Yil44Gv44CB57SU57KL44Gq5Yem55CG44GL44KJ6YCa5L+h44G+44Gn44KS5YCL5Yil44Gr5qSc6Ki844GX44CB5ZOB6LOq44Gv5qiq5pat44Gn6KaL44KLPC90ZXh0Pgo8cmVjdCB4PSI2MCIgeT0iOTYiIHdpZHRoPSIyMDUiIGhlaWdodD0iMTE4IiByeD0iMTIiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMTYyIiB5PSIxMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj7ntJTnsovjgarlh6bnkIY8L3RleHQ+PHRleHQgeD0iMTYyIiB5PSIxNTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMjIzZTUzIj7ikaAg44Ot44K444OD44Kv44OG44K544OIPC90ZXh0Pjx0ZXh0IHg9IjE2MiIgeT0iMTc0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzIyM2U1MyI+4pGhIOODkOODquODh+ODvOOCt+ODp+ODs+ODhuOCueODiDwvdGV4dD48dGV4dCB4PSIxNjIiIHk9IjE5NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuWvvuixoe+8mumWouaVsOODu1NjaGVtYTwvdGV4dD4KPHJlY3QgeD0iMjg1IiB5PSI5NiIgd2lkdGg9IjIwNSIgaGVpZ2h0PSIxMTgiIHJ4PSIxMiIgZmlsbD0iI2UxZWRmOCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIzODgiIHk9IjEyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPueKtuaFizwvdGV4dD48dGV4dCB4PSIzODgiIHk9IjE1MiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyMjNlNTMiPuKRoiBIb29rc+ODhuOCueODiDwvdGV4dD48dGV4dCB4PSIzODgiIHk9IjE3NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyMjNlNTMiPuKRoyDnirbmhYvnrqHnkIbjg4bjgrnjg4g8L3RleHQ+PHRleHQgeD0iMzg4IiB5PSIxOTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7lr77osaHvvJpIb29r44O7U3RvcmU8L3RleHQ+CjxyZWN0IHg9IjUxMCIgeT0iOTYiIHdpZHRoPSIyMDUiIGhlaWdodD0iMTE4IiByeD0iMTIiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNjEyIiB5PSIxMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj7jgrPjg7Pjg53jg7zjg43jg7Pjg4g8L3RleHQ+PHRleHQgeD0iNjEyIiB5PSIxNTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMjIzZTUzIj7ikaQg6KGo56S644OG44K544OIPC90ZXh0Pjx0ZXh0IHg9IjYxMiIgeT0iMTc0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzIyM2U1MyI+4pGlIOaTjeS9nOODhuOCueODiDwvdGV4dD48dGV4dCB4PSI2MTIiIHk9IjE5NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuWvvuixoe+8mlByb3Bz44O744Kk44OZ44Oz44OIPC90ZXh0Pgo8cmVjdCB4PSI3MzUiIHk9Ijk2IiB3aWR0aD0iMjA1IiBoZWlnaHQ9IjExOCIgcng9IjEyIiBmaWxsPSIjZTFlZGY4IiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjgzOCIgeT0iMTI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+6YCa5L+hPC90ZXh0Pjx0ZXh0IHg9IjgzOCIgeT0iMTUyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzIyM2U1MyI+4pGmIEFQSeOCr+ODqeOCpOOCouODs+ODiOODhuOCueODiDwvdGV4dD48dGV4dCB4PSI4MzgiIHk9IjE3NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuWvvuixoe+8muODquOCr+OCqOOCueODiOODu+W/nOetlDwvdGV4dD4KPHJlY3QgeD0iNjAiIHk9IjIzNiIgd2lkdGg9Ijg4MCIgaGVpZ2h0PSI1MCIgcng9IjEyIiBmaWxsPSIjZWVmM2YxIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjUwMCIgeT0iMjU3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzIyM2U1MyI+4pGnIOOCs+ODs+ODneODvOODjeODs+ODiOWTgeizquODhuOCueODiDwvdGV4dD48dGV4dCB4PSI1MDAiIHk9IjI4MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuimluimmueahOWTgeizquODu+OCouOCr+OCu+OCt+ODk+ODquODhuOCo+ODu+ODrOOCueODneODs+OCt+ODluODu+OCreODvOODnOODvOODieaTjeS9nOODu+OCquODvOODkOODvOODleODreODvO+8iOeoruWIpeOCkuaoquaWreOBl+OBpuimi+OCi++8iTwvdGV4dD4KPHBhdGggZD0iTTYwLjAgMzEyLjAgTDkzMC4wIDMxMi4wIiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIvPjxwb2x5Z29uIHBvaW50cz0iOTQwLjAsMzEyLjAgOTI4LjAsMzE5LjAgOTI4LjAsMzA1LjAiIGZpbGw9IiM2MDdhOTEiLz4KPHRleHQgeD0iMTYyIiB5PSIzMzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMjIzZTUzIj5VSeOBi+OCiembouOCjOOBn+WHpueQhu+8muacgOOCgumAn+OBj+WuieWumjwvdGV4dD4KPHRleHQgeD0iNjEyIiB5PSIzMzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMjIzZTUzIj5VSeOBq+i/keOBhDwvdGV4dD4KPHRleHQgeD0iODM4IiB5PSIzMzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMjIzZTUzIj7lpJbpg6jjgajjga7looPnlYw8L3RleHQ+Cjx0ZXh0IHg9IjUwMCIgeT0iMzgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzU1NjQ2ZCI+44GE44Ga44KM44KC5Y2Y5L2T44OG44K544OI44Gu56+E5Zuy44CC4pGn44Gv44Os44OZ44Or44Go44Gv5Yil44Gu5YiG6aGe6Lu444Gg44GM44CB44Kz44Oz44Od44O844ON44Oz44OI5Y2Y5L2N44Gn6KGM44GI44KL44KC44Gu44Gv5Y2Y5L2T5bel56iL44Gr5ZCr44KB44KLPC90ZXh0Pgo8L3N2Zz4K" alt="8種別が検証する範囲" />
+<figcaption aria-hidden="true">8種別が検証する範囲</figcaption>
+</figure>
+<h3 id="ロジックテスト">4.1. ロジックテスト</h3>
+<p>UIから分離された処理の正当性を検証します。</p>
+<ul>
+<li>金額計算・端数処理</li>
+<li>日付・時刻の変換</li>
+<li>データのソート・フィルタリング</li>
+<li>表示用データへの変換</li>
+<li>業務ルールに基づく判定</li>
+<li>境界値・異常値処理</li>
+</ul>
+<p>最も高速で安定しており、AIによるテストコード生成にも適しています。</p>
+<h3 id="バリデーションテスト">4.2. バリデーションテスト</h3>
+<p>入力値に対する制約と判定を検証します。</p>
+<ul>
+<li>必須入力</li>
+<li>文字数・文字種</li>
+<li>数値範囲</li>
+<li>日付範囲</li>
+<li>項目間相関チェック</li>
+<li>エラーメッセージの生成</li>
+</ul>
+<p>Zod（TypeScript向けのSchema定義・検証ライブラリ）などで入力制約をSchemaとして分離することで、画面を起動せずに検証できます。</p>
+<h3 id="hooksテスト">4.3. Hooksテスト</h3>
+<p>カスタムHookが提供するインターフェースと振る舞いを検証します。</p>
+<p>検証対象は、初期状態、状態変更、非同期処理、エラー処理、再取得、キャンセル、リソース解放などです。</p>
+<h3 id="状態管理テスト">4.4. 状態管理テスト</h3>
+<p>ZustandやReduxなどで管理する状態（Store）と、その更新ルールを検証します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>期待結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>商品追加</td>
+<td>商品一覧に追加される</td>
+</tr>
+<tr>
+<td>同一商品追加</td>
+<td>数量が加算される</td>
+</tr>
+<tr>
+<td>商品削除</td>
+<td>対象商品が除去される</td>
+</tr>
+<tr>
+<td>カート初期化</td>
+<td>初期状態に戻る</td>
+</tr>
+<tr>
+<td>数量変更</td>
+<td>合計金額が更新される</td>
+</tr>
+</tbody>
+</table></div>
+<p>Store単体で検証する場合は単体テスト、複数のコンポーネントがStoreを介して連動する場合はFrontend内部結合テストになります。</p>
+<h3 id="コンポーネント表示テスト">4.5. コンポーネント表示テスト</h3>
+<p>Propsや内部状態に対して、期待する表示が行われることを検証します。</p>
+<p>検索結果テーブルであれば、正常、Loading、Empty、Errorの4つの表示状態があります。</p>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjM3OCIgdmlld0JveD0iMCAwIDEwMDAgMzc4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IuOCs+ODs+ODneODvOODjeODs+ODiOOBrjTjgaTjga7ooajnpLrnirbmhYsiIGFyaWEtZGVzY3JpYmVkYnk9ImRlc2MiPgo8ZGVzYyBpZD0iZGVzYyI+5qSc57Si57WQ5p6c44OG44O844OW44Or44GuNOOBpOOBruihqOekuueKtuaFi+OAjOato+W4uO+8iEMwMDEg5bGx55SwIOWkqumDjuOAgUMwMDIg5bGx55SwIOiKseWtkOOAgUMwMDMg5bGx55Sw5ZWG5LqL44GuM+ihjO+8ieOAjeOAjExvYWRpbmfvvIjoqq3jgb/ovrzjgb/kuK3igKbvvInjgI3jgIxFbXB0ee+8iOipsuW9k+OBmeOCi+ODh+ODvOOCv+OBjOOBguOCiuOBvuOBm+OCk++8ieOAjeOAjEVycm9y77yI44OH44O844K/5Y+W5b6X44Gr5aSx5pWX44GX44G+44GX44Gf77yJ44CN44KS5bCP44GV44Gq5p6g44Gn5Lim44G544CB44Gd44KM44Ge44KM44GL44KJ5LiL44Gu44CMU3RvcnnjgajjgZfjgablrprnvqnjgZfjgIHooajnpLrjg4bjgrnjg4jjga7lhaXlipvjgavjgZnjgovvvIjjg4fjgrbjgqTjg7Pnorroqo3jgajjg4bjgrnjg4jos4fnlKPjgpLlhbHpgJrljJbjgZnjgovvvInjgI3jgbjnn6LljbDjgpLlvJXjgYTjgZ/lm7M8L2Rlc2M+CjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmY2ZkZmQiLz4KPHRleHQgeD0iNTAiIHk9IjUwIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMTgzMjRiIj7ooajnpLrnirbmhYvjgZTjgajjgatTdG9yeeOCkuWumue+qeOBl+OAgeODh+OCtuOCpOODs+eiuuiqjeOBqOODhuOCueODiOOBp+WFseacieOBmeOCizwvdGV4dD4KPHJlY3QgeD0iNjAiIHk9Ijk2IiB3aWR0aD0iMTkwIiBoZWlnaHQ9IjEyNCIgcng9IjEyIiBmaWxsPSIjZWVmM2YxIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPgo8dGV4dCB4PSIxNTUiIHk9IjEyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyMjNlNTMiPuato+W4uDwvdGV4dD4KPHJlY3QgeD0iNzUiIHk9IjEzNiIgd2lkdGg9IjE2MCIgaGVpZ2h0PSIyMiIgcng9IjQiIGZpbGw9IiNkNmU2ZjIiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjgzIiB5PSIxNTMiIHRleHQtYW5jaG9yPSJzdGFydCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyMjNlNTMiPkMwMDEg5bGx55SwIOWkqumDjjwvdGV4dD4KPHJlY3QgeD0iNzUiIHk9IjE2MCIgd2lkdGg9IjE2MCIgaGVpZ2h0PSIyMiIgcng9IjQiIGZpbGw9IiNkNmU2ZjIiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjgzIiB5PSIxNzciIHRleHQtYW5jaG9yPSJzdGFydCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyMjNlNTMiPkMwMDIg5bGx55SwIOiKseWtkDwvdGV4dD4KPHJlY3QgeD0iNzUiIHk9IjE4NCIgd2lkdGg9IjE2MCIgaGVpZ2h0PSIyMiIgcng9IjQiIGZpbGw9IiNkNmU2ZjIiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjgzIiB5PSIyMDEiIHRleHQtYW5jaG9yPSJzdGFydCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMyMjNlNTMiPkMwMDMg5bGx55Sw5ZWG5LqLPC90ZXh0Pgo8cGF0aCBkPSJNMTU1LjAgMjIwLjAgTDE1NS4wIDI0NC4wIiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIvPjxwb2x5Z29uIHBvaW50cz0iMTU1LjAsMjU0LjAgMTQ4LjAsMjQyLjAgMTYyLjAsMjQyLjAiIGZpbGw9IiM2MDdhOTEiLz4KPHJlY3QgeD0iMjkwIiB5PSI5NiIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMjQiIHJ4PSIxMiIgZmlsbD0iI2VlZjNmMSIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHRleHQgeD0iMzg1IiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5Mb2FkaW5nPC90ZXh0Pgo8dGV4dCB4PSIzODUiIHk9IjE3NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM1NTY0NmQiPuiqreOBv+i+vOOBv+S4reKApjwvdGV4dD4KPHBhdGggZD0iTTM4NS4wIDIyMC4wIEwzODUuMCAyNDQuMCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz48cG9seWdvbiBwb2ludHM9IjM4NS4wLDI1NC4wIDM3OC4wLDI0Mi4wIDM5Mi4wLDI0Mi4wIiBmaWxsPSIjNjA3YTkxIi8+CjxyZWN0IHg9IjUyMCIgeT0iOTYiIHdpZHRoPSIxOTAiIGhlaWdodD0iMTI0IiByeD0iMTIiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjYxNSIgeT0iMTIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzIyM2U1MyI+RW1wdHk8L3RleHQ+Cjx0ZXh0IHg9IjYxNSIgeT0iMTY4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzU1NjQ2ZCI+6Kmy5b2T44GZ44KL44OH44O844K/44GMPC90ZXh0Pjx0ZXh0IHg9IjYxNSIgeT0iMTg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzU1NjQ2ZCI+44GC44KK44G+44Gb44KTPC90ZXh0Pgo8cGF0aCBkPSJNNjE1LjAgMjIwLjAgTDYxNS4wIDI0NC4wIiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIvPjxwb2x5Z29uIHBvaW50cz0iNjE1LjAsMjU0LjAgNjA4LjAsMjQyLjAgNjIyLjAsMjQyLjAiIGZpbGw9IiM2MDdhOTEiLz4KPHJlY3QgeD0iNzUwIiB5PSI5NiIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMjQiIHJ4PSIxMiIgZmlsbD0iI2VlZjNmMSIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz4KPHRleHQgeD0iODQ1IiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5FcnJvcjwvdGV4dD4KPHRleHQgeD0iODQ1IiB5PSIxNzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOWMzZjJhIj7jg4fjg7zjgr/lj5blvpfjgavlpLHmlZfjgZfjgb7jgZfjgZ88L3RleHQ+CjxwYXRoIGQ9Ik04NDUuMCAyMjAuMCBMODQ1LjAgMjQ0LjAiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PHBvbHlnb24gcG9pbnRzPSI4NDUuMCwyNTQuMCA4MzguMCwyNDIuMCA4NTIuMCwyNDIuMCIgZmlsbD0iIzYwN2E5MSIvPgo8cmVjdCB4PSI2MCIgeT0iMjU0IiB3aWR0aD0iODgwIiBoZWlnaHQ9IjU2IiByeD0iMTIiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAwIiB5PSIyNzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj5TdG9yeeOBqOOBl+OBpuWumue+qeOBl+OAgeihqOekuuODhuOCueODiOOBruWFpeWKm+OBq+OBmeOCizwvdGV4dD48dGV4dCB4PSI1MDAiIHk9IjMwMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuODh+OCtuOCpOODs+eiuuiqjeOBqOODhuOCueODiOizh+eUo+OCkuWFsemAmuWMluOBmeOCizwvdGV4dD4KPHRleHQgeD0iNTAwIiB5PSIzNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTU2NDZkIj5Mb2FkaW5n44O7RW1wdHnjg7tFcnJvcuOBr+OAgeeKtuaFi+OBqOOBl+OBpuWumue+qeOBl+OBquOBkeOCjOOBsOaknOiovOOBleOCjOOBquOBhDwvdGV4dD4KPC9zdmc+Cg==" alt="コンポーネントの4つの表示状態" />
+<figcaption aria-hidden="true">コンポーネントの4つの表示状態</figcaption>
+</figure>
+<p>StorybookのStoryとして各状態を定義しておくことで、デザイン確認とテスト資産を共通化できます。<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<h3 id="コンポーネント操作テスト">4.6. コンポーネント操作テスト</h3>
+<p>ユーザー操作に対するコンポーネントの振る舞いを検証します。</p>
+<p>クリック、テキスト入力、選択、フォーカス移動、キーボード操作、ダイアログ開閉、イベント発火などが対象になります。</p>
+<p>内部実装やStateの値ではなく、<strong>ユーザーから観測できる結果と公開されたインターフェースを検証する</strong>ことを原則とします。<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<h3 id="apiクライアントテスト">4.7. APIクライアントテスト</h3>
+<p>Frontend側の通信処理を、Backendから独立して検証します。</p>
+<p>MSWなどでHTTPレスポンスを制御し、次のような振る舞いを確認します。<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>入力・条件</th>
+<th>検証内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>検索条件</td>
+<td>Query Parameterの生成</td>
+</tr>
+<tr>
+<td>登録データ</td>
+<td>Request Bodyの生成</td>
+</tr>
+<tr>
+<td>HTTP 200</td>
+<td>正常応答の処理</td>
+</tr>
+<tr>
+<td>HTTP 400</td>
+<td>入力エラーの処理</td>
+</tr>
+<tr>
+<td>HTTP 401・403</td>
+<td>認証・認可エラーの処理</td>
+</tr>
+<tr>
+<td>HTTP 500</td>
+<td>サーバーエラーの処理</td>
+</tr>
+<tr>
+<td>通信失敗</td>
+<td>リトライ・エラー処理</td>
+</tr>
+</tbody>
+</table></div>
+<p>ただし、Mock APIによる検証では、実Backendとのインターフェース整合性までは保証できません。そこは契約テスト（OpenAPIなどのAPI定義と実装の整合を機械的に確かめるテスト）や、実APIとの結合テストで担保します。</p>
+<h3 id="コンポーネント品質テスト">4.8. コンポーネント品質テスト</h3>
+<p>機能的な正しさとは異なる、UI固有の品質を検証します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>テスト種別</th>
+<th>検証内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Visual Regression Test</td>
+<td>意図しない外観の変化</td>
+</tr>
+<tr>
+<td>Accessibility Test</td>
+<td>ARIA属性、ラベル、コントラスト等</td>
+</tr>
+<tr>
+<td>Responsive Test</td>
+<td>画面幅による表示崩れ</td>
+</tr>
+<tr>
+<td>Keyboard Navigation Test</td>
+<td>キーボードによる操作可能性</td>
+</tr>
+<tr>
+<td>Overflow Test</td>
+<td>長文・大量データによる表示崩れ</td>
+</tr>
+</tbody>
+</table></div>
+<p>Visual Regression Test（VRT）は、描画結果の画像を前回と比較して差分を検出するテストです。アクセシビリティテストの手段と確認対象は、別記事「React／Frontendにおけるアクセシビリティテストの整理」で扱います。</p>
+<p>厳密には、これらは単体・結合というテストレベルとは別の分類軸です。ただし、コンポーネント単位で実施できるものはFrontend単体テスト工程に含めてよいと考えます。</p>
+<h2 id="テストレベルとテスト種別のマトリクス">5. テストレベルとテスト種別のマトリクス</h2>
+<p>テスト種別とテストレベルを混同しないために、二次元で整理します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>テスト種別</th>
+<th>FE単体</th>
+<th>FE内部結合</th>
+<th>FE・BE結合</th>
+<th>ST</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ロジック</td>
+<td>◎</td>
+<td>―</td>
+<td>―</td>
+<td>―</td>
+</tr>
+<tr>
+<td>バリデーション</td>
+<td>◎</td>
+<td>○</td>
+<td>○</td>
+<td>―</td>
+</tr>
+<tr>
+<td>Hooks</td>
+<td>◎</td>
+<td>○</td>
+<td>―</td>
+<td>―</td>
+</tr>
+<tr>
+<td>状態管理</td>
+<td>◎</td>
+<td>◎</td>
+<td>―</td>
+<td>―</td>
+</tr>
+<tr>
+<td>UI表示</td>
+<td>◎</td>
+<td>◎</td>
+<td>○</td>
+<td>○</td>
+</tr>
+<tr>
+<td>UI操作</td>
+<td>◎</td>
+<td>◎</td>
+<td>○</td>
+<td>○</td>
+</tr>
+<tr>
+<td>API通信</td>
+<td>○</td>
+<td>◎</td>
+<td>◎</td>
+<td>○</td>
+</tr>
+<tr>
+<td>画面遷移</td>
+<td>―</td>
+<td>◎</td>
+<td>○</td>
+<td>○</td>
+</tr>
+<tr>
+<td>Visual Regression</td>
+<td>◎</td>
+<td>◎</td>
+<td>―</td>
+<td>―</td>
+</tr>
+<tr>
+<td>アクセシビリティ</td>
+<td>◎</td>
+<td>◎</td>
+<td>―</td>
+<td>○</td>
+</tr>
+<tr>
+<td>レスポンシブ</td>
+<td>◎</td>
+<td>◎</td>
+<td>―</td>
+<td>○</td>
+</tr>
+<tr>
+<td>認証認可</td>
+<td>○</td>
+<td>○</td>
+<td>◎</td>
+<td>◎</td>
+</tr>
+<tr>
+<td>データ永続化</td>
+<td>―</td>
+<td>―</td>
+<td>◎</td>
+<td>○</td>
+</tr>
+<tr>
+<td>業務シナリオ</td>
+<td>―</td>
+<td>○</td>
+<td>○</td>
+<td>◎</td>
+</tr>
+</tbody>
+</table></div>
+<p>凡例：◎ 主たる検証工程／○ 補完的な検証／― 原則対象外</p>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjQ1OCIgdmlld0JveD0iMCAwIDEwMDAgNDU4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IueoruWIpeOBlOOBqOOBruS4u+OBn+OCi+aknOiovOW3peeoiyIgYXJpYS1kZXNjcmliZWRieT0iZGVzYyI+CjxkZXNjIGlkPSJkZXNjIj5GReWNmOS9k+OAgUZF5YaF6YOo57WQ5ZCI44CBRkXjg7tCRee1kOWQiOOAgVNU77yI44K344K544OG44Og44OG44K544OI77yJ44GuNOautemajuOBruS4i+OBq+OAgeOBneOCjOOBnuOCjOOAjOWAi+WIpeOBruiyrOWLme+8iOODreOCuOODg+OCr+OAgeODkOODquODh+ODvOOCt+ODp+ODs+OAgUhvb2tz44O754q25oWL566h55CG44CBVUnooajnpLrjg7tVSeaTjeS9nOOAgVZSVOODu2ExMXnjg7vjg6zjgrnjg53jg7Pjgrfjg5bvvInjgI3jgIzosqzli5nplpPjga7pgKPmkLrvvIjnirbmhYvnrqHnkIbjga7pgKPmkLrjgIHnlLvpnaLpgbfnp7vjgIFBUEnpgJrkv6HvvIhNb2Nr77yJ44CBVUnooajnpLrjg7vmk43kvZzjga7pgKPmkLrvvInjgI3jgIzlrp9BUEnjgajjga7pgKPmkLrvvIhBUEnpgJrkv6HvvIjlrp9BUEnvvInjgIHoqo3oqLzoqo3lj6/jgIHjg4fjg7zjgr/msLjntprljJbvvInjgI3jgIzmpa3li5njgrfjg4rjg6rjgqrvvIjmpa3li5njgrfjg4rjg6rjgqrjgIHjgrfjgrnjg4bjg6DlhajkvZPjga7opoHmsYLlhYXotrPvvInjgI3jga7jgqvjg7zjg4njgpLnva7jgY3jgIHlt6Yy5YiX44KS44OW44Op44Kx44OD44OI44Gn5ous44Gj44Gm44CM5Li744Gf44KL5bel56iL44Gu5aSn5Y2K44GvUEfjg7tVVOOAjeOBqOOBl+OBn+WbszwvZGVzYz4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZjZmRmZCIvPgo8dGV4dCB4PSI1MCIgeT0iNTAiIHRleHQtYW5jaG9yPSJzdGFydCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxODMyNGIiPuWQhOeoruWIpeOBr+OAgeacgOOCguS9juOCs+OCueODiOOBp+eiuuWun+OBq+aknOiovOOBp+OBjeOCi+W3peeoi+OCkuS4u+OBn+OCi+W3peeoi+OBq+OBmeOCizwvdGV4dD4KPHBhdGggZD0iTTE2NS41IDExNS4wIEw5NTIuMCAxMTUuMCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz48cG9seWdvbiBwb2ludHM9Ijk2Mi4wLDExNS4wIDk1MC4wLDEyMi4wIDk1MC4wLDEwOC4wIiBmaWxsPSIjNjA3YTkxIi8+PHJlY3QgeD0iNjAiIHk9Ijk2IiB3aWR0aD0iMjExIiBoZWlnaHQ9IjM4IiByeD0iMTkuMCIgZmlsbD0iI2UxZWRmOCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIxNjYiIHk9IjEyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyYjVmOWUiPkZF5Y2Y5L2TPC90ZXh0PjxyZWN0IHg9IjI4MyIgeT0iOTYiIHdpZHRoPSIyMTEiIGhlaWdodD0iMzgiIHJ4PSIxOS4wIiBmaWxsPSIjZTllNGY1IiBzdHJva2U9IiM4YTZjYzEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjM4OCIgeT0iMTIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzZhNGVhNiI+RkXlhoXpg6jntZDlkIg8L3RleHQ+PHJlY3QgeD0iNTA2IiB5PSI5NiIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNjEyIiB5PSIxMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5GReODu0JF57WQ5ZCIPC90ZXh0PjxyZWN0IHg9IjcyOSIgeT0iOTYiIHdpZHRoPSIyMTEiIGhlaWdodD0iMzgiIHJ4PSIxOS4wIiBmaWxsPSIjZWVmM2YxIiBzdHJva2U9IiM4ZWE2YjIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjgzNCIgeT0iMTIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzIyM2U1MyI+U1TvvIjjgrfjgrnjg4bjg6Djg4bjgrnjg4jvvIk8L3RleHQ+CjxyZWN0IHg9IjYwIiB5PSIxNjAiIHdpZHRoPSIyMTEiIGhlaWdodD0iMTcwIiByeD0iMTIiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMTY2IiB5PSIxODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE3IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj7lgIvliKXjga7osqzli5k8L3RleHQ+PHRleHQgeD0iMTY2IiB5PSIyMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7jg63jgrjjg4Pjgq88L3RleHQ+PHRleHQgeD0iMTY2IiB5PSIyMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7jg5Djg6rjg4fjg7zjgrfjg6fjg7M8L3RleHQ+PHRleHQgeD0iMTY2IiB5PSIyNTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5Ib29rc+ODu+eKtuaFi+euoeeQhjwvdGV4dD48dGV4dCB4PSIxNjYiIHk9IjI3NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPlVJ6KGo56S644O7VUnmk43kvZw8L3RleHQ+PHRleHQgeD0iMTY2IiB5PSIyOTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5WUlTjg7thMTF544O744Os44K544Od44Oz44K344OWPC90ZXh0Pgo8cmVjdCB4PSIyODMiIHk9IjE2MCIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIxNzAiIHJ4PSIxMiIgZmlsbD0iI2U5ZTRmNSIgc3Ryb2tlPSIjOGE2Y2MxIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIzODgiIHk9IjE4OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTciIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM2YTRlYTYiPuiyrOWLmemWk+OBrumAo+aQujwvdGV4dD48dGV4dCB4PSIzODgiIHk9IjIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPueKtuaFi+euoeeQhuOBrumAo+aQujwvdGV4dD48dGV4dCB4PSIzODgiIHk9IjIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPueUu+mdoumBt+enuzwvdGV4dD48dGV4dCB4PSIzODgiIHk9IjI1NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPkFQSemAmuS/oe+8iE1vY2vvvIk8L3RleHQ+PHRleHQgeD0iMzg4IiB5PSIyNzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5VSeihqOekuuODu+aTjeS9nOOBrumAo+aQujwvdGV4dD4KPHJlY3QgeD0iNTA2IiB5PSIxNjAiIHdpZHRoPSIyMTEiIGhlaWdodD0iMTcwIiByeD0iMTIiIGZpbGw9IiNmN2U5ZDQiIHN0cm9rZT0iI2MwNjA0YSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNjEyIiB5PSIxODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE3IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjOWMzZjJhIj7lrp9BUEnjgajjga7pgKPmkLo8L3RleHQ+PHRleHQgeD0iNjEyIiB5PSIyMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5BUEnpgJrkv6HvvIjlrp9BUEnvvIk8L3RleHQ+PHRleHQgeD0iNjEyIiB5PSIyMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7oqo3oqLzoqo3lj688L3RleHQ+PHRleHQgeD0iNjEyIiB5PSIyNTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7jg4fjg7zjgr/msLjntprljJY8L3RleHQ+CjxyZWN0IHg9IjcyOSIgeT0iMTYwIiB3aWR0aD0iMjExIiBoZWlnaHQ9IjE3MCIgcng9IjEyIiBmaWxsPSIjZjdlOWQ0IiBzdHJva2U9IiNjMDYwNGEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjgzNCIgeT0iMTg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNyIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzljM2YyYSI+5qWt5YuZ44K344OK44Oq44KqPC90ZXh0Pjx0ZXh0IHg9IjgzNCIgeT0iMjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+5qWt5YuZ44K344OK44Oq44KqPC90ZXh0Pjx0ZXh0IHg9IjgzNCIgeT0iMjM2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+44K344K544OG44Og5YWo5L2T44Gu6KaB5rGC5YWF6LazPC90ZXh0Pgo8cGF0aCBkPSJNNjAuMCAzNjQgVjM1MiBINDk0LjAgVjM2NCIgc3Ryb2tlPSIjMmY2YjQ1IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz48dGV4dCB4PSIyNzciIHk9IjM4NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyZjZiNDUiPuS4u+OBn+OCi+W3peeoi+OBruWkp+WNiuOBr1BH44O7VVQ8L3RleHQ+Cjx0ZXh0IHg9IjUwMCIgeT0iNDMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzU1NjQ2ZCI+5ZCM44GY6Kaz54K544KS44GZ44G544Gm44Gu5bel56iL44Gn57mw44KK6L+U44GV44Ga44CB5Li744Gf44KL5bel56iL44KSMeOBpOaxuuOCgeOAgeOBu+OBi+OBruW3peeoi+OBr+ijnOWujOOBq+OBqOOBqeOCgeOCizwvdGV4dD4KPC9zdmc+Cg==" alt="種別ごとの主たる検証工程" />
+<figcaption aria-hidden="true">種別ごとの主たる検証工程</figcaption>
+</figure>
+<p>すべてのテストレベルで同じ観点を繰り返すのではなく、最も低コストで確実に検証できる工程を主たる検証工程とします。</p>
+<h2 id="受託開発の工程へのマッピング">6. 受託開発の工程へのマッピング</h2>
+<p>従来型の受託開発の工程（PG・UT＝プログラミングと単体テスト、IT＝結合テスト、ST＝システムテスト）に適用するなら、次のように定義することを推奨します。</p>
+<p>ここでは、<strong>Frontend内部結合テストをテスト技法上は結合テストと位置づけながら、プロジェクト管理上はPG・UT工程に含めます。</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>工程</th>
+<th>完了条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PG・UT</td>
+<td>Backendに依存せずFrontendの機能要求を満たしている</td>
+</tr>
+<tr>
+<td>IT</td>
+<td>実Backendとの連携を含めて機能要求を満たしている</td>
+</tr>
+<tr>
+<td>ST</td>
+<td>システム全体として業務要求・非機能要求を満たしている</td>
+</tr>
+</tbody>
+</table></div>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjQxNiIgdmlld0JveD0iMCAwIDEwMDAgNDE2IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IuODhuOCueODiOODrOODmeODq+OBqOmWi+eZuuW3peeoi+OBruWvvuW/nCIgYXJpYS1kZXNjcmliZWRieT0iZGVzYyI+CjxkZXNjIGlkPSJkZXNjIj5GReWNmOS9k+OAgUZF5YaF6YOo57WQ5ZCI44CBRkXjg7tCRee1kOWQiOOAgVNU77yI44K344K544OG44Og44OG44K544OI77yJ44GuNOautemajuOBruS4iuOBq+OAjFBH44O7VVTlt6XnqIvjgI3vvIjlt6Yy5q6177yJ44CMSVTlt6XnqIvjgI3jgIxTVOW3peeoi+OAjeOBruODluODqeOCseODg+ODiOOCkue9ruOBjeOAgeS4i+OBq+OBneOCjOOBnuOCjOOBruWujOS6huadoeS7tuOAjEJhY2tlbmTjgavkvp3lrZjjgZvjgZrjgIFGcm9udGVuZOOBruapn+iDveimgeaxguOCkua6gOOBn+OBl+OBpuOBhOOCi++8iEZF5YaF6YOo57WQ5ZCI44OG44K544OI44Gv44CB44OG44K544OI5oqA5rOV5LiK44Gv57WQ5ZCI44OG44K544OI44Gn44KC44CB44GT44Gu5bel56iL44Gr5ZCr44KB44KL77yJ44CN44CM5a6fQmFja2VuZOOBqOOBrumAo+aQuuOCkuWQq+OCgeOBpuapn+iDveimgeaxguOCkua6gOOBn+OBmeOAjeOAjOOCt+OCueODhuODoOWFqOS9k+OBqOOBl+OBpualreWLmeODu+mdnuapn+iDveimgeaxguOCkua6gOOBn+OBmeOAjeOBruOCq+ODvOODieOCkue9ruOBjeOAgeW3pjLmrrXjgpLjgIxCYWNrZW5k44OB44O844Og44Go5Lim6KGM44GX44Gm6YCy44KB44KJ44KM44KL44CN44Gu44OW44Op44Kx44OD44OI44Gn5ous44Gj44Gf5ZuzPC9kZXNjPgo8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmNmZGZkIi8+Cjx0ZXh0IHg9IjUwIiB5PSI1MCIgdGV4dC1hbmNob3I9InN0YXJ0IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzE4MzI0YiI+RkXlhoXpg6jntZDlkIjjga/mioDms5XkuIrjga/ntZDlkIjjg4bjgrnjg4jjgIHnrqHnkIbkuIrjga9QR+ODu1VU5bel56iL44Gr5ZCr44KB44KLPC90ZXh0Pgo8cGF0aCBkPSJNNjAuMCAxMDAgVjExMiBINDk0LjAgVjEwMCIgc3Ryb2tlPSIjMmY2YjQ1IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz48dGV4dCB4PSIyNzciIHk9IjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJmNmI0NSI+UEfjg7tVVOW3peeoizwvdGV4dD4KPHBhdGggZD0iTTUwNi4wIDEwMCBWMTEyIEg3MTcuMCBWMTAwIiBzdHJva2U9IiMyMjNlNTMiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjYxMiIgeT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5JVOW3peeoizwvdGV4dD4KPHBhdGggZD0iTTcyOS4wIDEwMCBWMTEyIEg5NDAuMCBWMTAwIiBzdHJva2U9IiMyMjNlNTMiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjgzNCIgeT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5TVOW3peeoizwvdGV4dD4KPHBhdGggZD0iTTE2NS41IDEzOS4wIEw5NTIuMCAxMzkuMCIgc3Ryb2tlPSIjNjA3YTkxIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiLz48cG9seWdvbiBwb2ludHM9Ijk2Mi4wLDEzOS4wIDk1MC4wLDE0Ni4wIDk1MC4wLDEzMi4wIiBmaWxsPSIjNjA3YTkxIi8+PHJlY3QgeD0iNjAiIHk9IjEyMCIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMTY2IiB5PSIxNDQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj5GReWNmOS9kzwvdGV4dD48cmVjdCB4PSIyODMiIHk9IjEyMCIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlOWU0ZjUiIHN0cm9rZT0iIzhhNmNjMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMzg4IiB5PSIxNDQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjNmE0ZWE2Ij5GReWGhemDqOe1kOWQiDwvdGV4dD48cmVjdCB4PSI1MDYiIHk9IjEyMCIgd2lkdGg9IjIxMSIgaGVpZ2h0PSIzOCIgcng9IjE5LjAiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNjEyIiB5PSIxNDQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj5GReODu0JF57WQ5ZCIPC90ZXh0PjxyZWN0IHg9IjcyOSIgeT0iMTIwIiB3aWR0aD0iMjExIiBoZWlnaHQ9IjM4IiByeD0iMTkuMCIgZmlsbD0iI2VlZjNmMSIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI4MzQiIHk9IjE0NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyMjNlNTMiPlNU77yI44K344K544OG44Og44OG44K544OI77yJPC90ZXh0Pgo8cmVjdCB4PSI2MCIgeT0iMTg0IiB3aWR0aD0iNDM0IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9IiNlMGYwZTkiIHN0cm9rZT0iIzVhYTA2ZiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMjc3IiB5PSIyMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmY2YjQ1Ij7lrozkuobmnaHku7Y8L3RleHQ+PHRleHQgeD0iMjc3IiB5PSIyNDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5CYWNrZW5k44Gr5L6d5a2Y44Gb44Ga44CBRnJvbnRlbmTjga7mqZ/og73opoHmsYLjgpLmuoDjgZ/jgZfjgabjgYTjgos8L3RleHQ+PHRleHQgeD0iMjc3IiB5PSIyNjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5GReWGhemDqOe1kOWQiOODhuOCueODiOOBr+aKgOazleS4iuOBr+e1kOWQiOODhuOCueODiOOBp+OCguOAgeOBk+OBruW3peeoi+OBq+WQq+OCgeOCizwvdGV4dD4KPHJlY3QgeD0iNTA2IiB5PSIxODQiIHdpZHRoPSIyMTEiIGhlaWdodD0iOTYiIHJ4PSIxMiIgZmlsbD0iI2VlZjNmMSIgc3Ryb2tlPSIjOGVhNmIyIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI2MTIiIHk9IjIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMyMjNlNTMiPuWujOS6huadoeS7tjwvdGV4dD48dGV4dCB4PSI2MTIiIHk9IjI0MiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPuWun0JhY2tlbmTjgajjga7pgKPmkLrjgpI8L3RleHQ+PHRleHQgeD0iNjEyIiB5PSIyNjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7lkKvjgoHjgabmqZ/og73opoHmsYLjgpLmuoDjgZ/jgZk8L3RleHQ+CjxyZWN0IHg9IjcyOSIgeT0iMTg0IiB3aWR0aD0iMjExIiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9IiNlZWYzZjEiIHN0cm9rZT0iIzhlYTZiMiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iODM0IiB5PSIyMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMjIzZTUzIj7lrozkuobmnaHku7Y8L3RleHQ+PHRleHQgeD0iODM0IiB5PSIyNDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7jgrfjgrnjg4bjg6DlhajkvZPjgajjgZfjgaY8L3RleHQ+PHRleHQgeD0iODM0IiB5PSIyNjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj7mpa3li5njg7vpnZ7mqZ/og73opoHmsYLjgpLmuoDjgZ/jgZk8L3RleHQ+CjxwYXRoIGQ9Ik02MC4wIDMxMiBWMzAwIEg0OTQuMCBWMzEyIiBzdHJva2U9IiMyZjZiNDUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjI3NyIgeT0iMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJmNmI0NSI+QmFja2VuZOODgeODvOODoOOBqOS4puihjOOBl+OBpumAsuOCgeOCieOCjOOCizwvdGV4dD4KPHRleHQgeD0iNTAwIiB5PSIzODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTU2NDZkIj5Gcm9udGVuZOOBruW3peeoi+WujOS6huOCkuOAgUJhY2tlbmTjga7lrozmiJDjgavkvp3lrZjjgZXjgZvjgZrjgavliKTlrprjgafjgY3jgos8L3RleHQ+Cjwvc3ZnPgo=" alt="テストレベルと開発工程の対応" />
+<figcaption aria-hidden="true">テストレベルと開発工程の対応</figcaption>
+</figure>
+<p>この定義であれば、FrontendチームとBackendチームの並行開発を成立させやすくなります。</p>
+<h2 id="推奨技術スタックとテストアーキテクチャ">7. 推奨技術スタックとテストアーキテクチャ</h2>
+<p>React／Next.jsを前提とした標準テスト基盤は、次の構成がよいと考えます。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ツール</th>
+<th>主たる責務</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vitest</td>
+<td>ロジック、Schema、Hooks、Store</td>
+</tr>
+<tr>
+<td>React Testing Library</td>
+<td>コンポーネント表示・操作、内部結合</td>
+</tr>
+<tr>
+<td>Storybook</td>
+<td>コンポーネント状態の定義・操作・品質検証</td>
+</tr>
+<tr>
+<td>MSW</td>
+<td>API依存の分離、異常系レスポンスの再現</td>
+</tr>
+<tr>
+<td>Playwright</td>
+<td>実ブラウザ検証、画面遷移、実API結合</td>
+</tr>
+<tr>
+<td>axe-core</td>
+<td>アクセシビリティの自動検証</td>
+</tr>
+<tr>
+<td>OpenAPI</td>
+<td>API契約の定義・整合性検証の基準</td>
+</tr>
+</tbody>
+</table></div>
+<p>テストの配分は、下の層ほど速く安定し数が多く、上に行くほど実環境に近づく、という形になります。</p>
+<figure>
+<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjQ0OCIgdmlld0JveD0iMCAwIDEwMDAgNDQ4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IuamguW/teS4iuOBruODhuOCueODiOmFjeWIhiIgYXJpYS1kZXNjcmliZWRieT0iZGVzYyI+CjxkZXNjIGlkPSJkZXNjIj7kuIrjgYvjgonjgIxFMkXjg7tTVO+8iOalreWLmeOCt+ODiuODquOCqu+8ieOAjeOAjEZF44O7QkXntZDlkIjvvIjlrp9BUEnvvInvvJpQbGF5d3JpZ2h044CN44CMRkXlhoXpg6jntZDlkIjvvIjnlLvpnaLlhajkvZPjg7vnlLvpnaLpgbfnp7vvvInvvJpUZXN0aW5nIExpYnJhcnnvvItNU1fvvI9QbGF5d3JpZ2h077yLTVNX44CN44CM44Kz44Oz44Od44O844ON44Oz44OI44Gu6KGo56S644O75pON5L2c77yaVGVzdGluZyBMaWJyYXJ544O7U3Rvcnlib29r44CN44CM44Ot44K444OD44Kv44O7U2NoZW1h44O7SG9va3Pjg7tTdG9yZe+8mlZpdGVzdO+8iOacgOOCguWkmuOBj+OAgeacgOOCgumAn+OBhO+8ieOAjeOBrjXlsaTjgpLjgIHkuIvjgbvjganluYXjgYzluoPjgYTmrrXjgIXjga7jg5Tjg6njg5/jg4Pjg4njgajjgZfjgabnqY3jgb/jgIHlj7Pnq6/jga7kuIvjgYvjgonkuIrjgbjjga7nn6LljbDjgavjgIzpgJ/jgYTjg7vlpJrjgYTjgI3jgYvjgonjgIzlrp/nkrDlooPjgI3jgbjjgajoqJjjgZfjgZ/lm7M8L2Rlc2M+CjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmY2ZkZmQiLz4KPHRleHQgeD0iNTAiIHk9IjUwIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMTgzMjRiIj7kuIvjga7lsaTjgbvjganpgJ/jgY/lronlrprjgZfjgIHmlbDjgYzlpJrjgYTjgILkuIrjgavooYzjgY/jgbvjganlrp/nkrDlooPjgavov5HjgaXjgY88L3RleHQ+CjxyZWN0IHg9IjQwMCIgeT0iOTYiIHdpZHRoPSIyMDAiIGhlaWdodD0iNTIiIHJ4PSIxMiIgZmlsbD0iI2Y3ZTlkNCIgc3Ryb2tlPSIjYzA2MDRhIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MDAiIHk9IjExOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM5YzNmMmEiPkUyReODu1NUPC90ZXh0Pjx0ZXh0IHg9IjUwMCIgeT0iMTQyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+5qWt5YuZ44K344OK44Oq44KqPC90ZXh0Pgo8cmVjdCB4PSIzMzAiIHk9IjE1NCIgd2lkdGg9IjM0MCIgaGVpZ2h0PSI1MiIgcng9IjEyIiBmaWxsPSIjZjdlOWQ0IiBzdHJva2U9IiNjMDYwNGEiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjUwMCIgeT0iMTc2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzljM2YyYSI+RkXjg7tCRee1kOWQiO+8iOWun0FQSe+8iTwvdGV4dD48dGV4dCB4PSI1MDAiIHk9IjIwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPlBsYXl3cmlnaHQ8L3RleHQ+CjxyZWN0IHg9IjI2MCIgeT0iMjEyIiB3aWR0aD0iNDgwIiBoZWlnaHQ9IjUyIiByeD0iMTIiIGZpbGw9IiNlOWU0ZjUiIHN0cm9rZT0iIzhhNmNjMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAwIiB5PSIyMzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjNmE0ZWE2Ij5GReWGhemDqOe1kOWQiO+8iOeUu+mdouWFqOS9k+ODu+eUu+mdoumBt+enu++8iTwvdGV4dD48dGV4dCB4PSI1MDAiIHk9IjI1OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMzNjU1NmQiPlRlc3RpbmcgTGlicmFyee+8i01TV++8j1BsYXl3cmlnaHTvvItNU1c8L3RleHQ+CjxyZWN0IHg9IjE5MCIgeT0iMjcwIiB3aWR0aD0iNjIwIiBoZWlnaHQ9IjUyIiByeD0iMTIiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAwIiB5PSIyOTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj7jgrPjg7Pjg53jg7zjg43jg7Pjg4jjga7ooajnpLrjg7vmk43kvZw8L3RleHQ+PHRleHQgeD0iNTAwIiB5PSIzMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMzY1NTZkIj5UZXN0aW5nIExpYnJhcnnjg7tTdG9yeWJvb2s8L3RleHQ+CjxyZWN0IHg9IjEyMCIgeT0iMzI4IiB3aWR0aD0iNzYwIiBoZWlnaHQ9IjUyIiByeD0iMTIiIGZpbGw9IiNlMWVkZjgiIHN0cm9rZT0iIzYwN2E5MSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAwIiB5PSIzNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMmI1ZjllIj7jg63jgrjjg4Pjgq/jg7tTY2hlbWHjg7tIb29rc+ODu1N0b3JlPC90ZXh0Pjx0ZXh0IHg9IjUwMCIgeT0iMzc0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzM2NTU2ZCI+Vml0ZXN077ya5pyA44KC5aSa44GP44CB5pyA44KC6YCf44GEPC90ZXh0Pgo8cGF0aCBkPSJNOTUwLjAgMzc2LjAgTDk1MC4wIDEyMC4wIiBzdHJva2U9IiM2MDdhOTEiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIvPjxwb2x5Z29uIHBvaW50cz0iOTUwLjAsMTEwLjAgOTU3LjAsMTIyLjAgOTQzLjAsMTIyLjAiIGZpbGw9IiM2MDdhOTEiLz48dGV4dCB4PSI5NTAiIHk9Ijk4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzljM2YyYSI+5a6f55Kw5aKDPC90ZXh0Pjx0ZXh0IHg9Ijk1MCIgeT0iMzk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzJiNWY5ZSI+6YCf44GE44O75aSa44GEPC90ZXh0Pgo8dGV4dCB4PSI1MDAiIHk9IjQyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM1NTY0NmQiPuamguW/teS4iuOBrumFjeWIhuOBp+OBguOCiuOAgeODhuOCueODiOOCseODvOOCueaVsOOBruWbuuWumuavlOeOh+OBp+OBr+OBquOBhDwvdGV4dD4KPC9zdmc+Cg==" alt="概念上のテスト配分" />
+<figcaption aria-hidden="true">概念上のテスト配分</figcaption>
+</figure>
+<p>※ 図は概念上のテスト配分であり、テストケース数の固定比率を示すものではありません。</p>
+<h2 id="ai駆動開発におけるテスト生成の単位skill案">8. AI駆動開発におけるテスト生成の単位（Skill案）</h2>
+<p>AIによるテスト生成を標準化する場合も、1つの汎用的なFrontendテスト生成Skillに集約するより、入力情報と検証責務に応じて分割する方がよいと考えます。Skillは、AIに特定の作業手順と入出力を定義して渡す単位です。名称はいずれも案です。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>テスト生成Skill案</th>
+<th>主なインプット</th>
+<th>成果物</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Logic Test Generator</td>
+<td>関数・業務ルール</td>
+<td>Vitest</td>
+</tr>
+<tr>
+<td>Validation Test Generator</td>
+<td>Zod Schema・項目定義</td>
+<td>Vitest</td>
+</tr>
+<tr>
+<td>Hooks Test Generator</td>
+<td>Hook・状態遷移定義</td>
+<td>Vitest</td>
+</tr>
+<tr>
+<td>Store Test Generator</td>
+<td>Store・状態遷移定義</td>
+<td>Vitest</td>
+</tr>
+<tr>
+<td>Component Test Generator</td>
+<td>Props・Story・コンポーネント仕様</td>
+<td>Testing Library</td>
+</tr>
+<tr>
+<td>Component Quality Test Generator</td>
+<td>Story・デザイン仕様</td>
+<td>VRT・アクセシビリティテスト</td>
+</tr>
+<tr>
+<td>API Client Test Generator</td>
+<td>OpenAPI・通信処理</td>
+<td>Vitest・MSW</td>
+</tr>
+<tr>
+<td>Frontend Integration Test Generator</td>
+<td>画面仕様・状態遷移・OpenAPI</td>
+<td>Testing Library・Playwright・MSW</td>
+</tr>
+<tr>
+<td>API Integration Test Generator</td>
+<td>OpenAPI・結合テスト仕様</td>
+<td>実API結合テスト</td>
+</tr>
+<tr>
+<td>E2E Test Generator</td>
+<td>業務フロー・システム要求</td>
+<td>Playwright</td>
+</tr>
+</tbody>
+</table></div>
+<p>特に、単体テストとFrontend内部結合テストでは、AIに与えるべき情報の粒度が異なります。</p>
+<p>単体テストではソースコードと個別仕様が中心になります。一方、Frontend内部結合テストでは、画面仕様、画面遷移、状態遷移、API契約など、複数の成果物間の関係を理解させる必要があります。</p>
+<h2 id="おわりにfrontend単体テストの完了を何で判断するか">9. おわりに：Frontend単体テストの完了を何で判断するか</h2>
+<p>単体テストの完了条件を、コードカバレッジやコンポーネント単体の動作確認だけで定義してはいけません。</p>
+<p>Frontend開発工程としての完成判定は、次の条件で定義することを推奨します。</p>
+<ul>
+<li>個々のロジック、コンポーネント、Hooks、Storeの責務が検証されている。</li>
+<li>正常系・異常系・境界値・主要な表示状態が検証されている。</li>
+<li>Mock APIを利用して画面全体の機能が検証されている。</li>
+<li>画面内および画面間の状態・操作の連携が検証されている。</li>
+<li>実Backendとの結合によって初めて検証可能になる事項が明確に分離されている。</li>
+</ul>
+<p><strong>IT工程を、Frontendの基本的な動作不良を発見する工程にしない。</strong></p>
+<h2 id="参考文献注記">参考文献・注記</h2>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>ISTQB, <em>Standard Glossary of Terms used in Software Testing</em>。テストレベル（コンポーネントテスト、統合テスト、システムテスト）の定義。<a href="https://glossary.istqb.org/" class="uri">https://glossary.istqb.org/</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Vitest, <em>Browser Mode</em>。実ブラウザ上でテストを実行するモード。<a href="https://vitest.dev/guide/browser/" class="uri">https://vitest.dev/guide/browser/</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Microsoft, <em>Playwright: Components (experimental)</em>。コンポーネント単位で実ブラウザ上のテストを実行する機能。<a href="https://playwright.dev/docs/test-components" class="uri">https://playwright.dev/docs/test-components</a><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Storybook, <em>Interaction tests</em>。Storyを入力にした表示・操作の自動テスト。<a href="https://storybook.js.org/docs/writing-tests/interaction-testing" class="uri">https://storybook.js.org/docs/writing-tests/interaction-testing</a><a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Testing Library, <em>Guiding Principles</em>。利用者がソフトウェアを使う方法に近いテストほど信頼できる、という指針。<a href="https://testing-library.com/docs/guiding-principles/" class="uri">https://testing-library.com/docs/guiding-principles/</a><a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Mock Service Worker, <em>Introduction</em>。ネットワーク層でリクエストを捕捉し、応答を模擬するライブラリ。<a href="https://mswjs.io/docs/" class="uri">https://mswjs.io/docs/</a><a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+</article><footer>2026年11月24日時点 / 第1版 — 本文はMarkdown、図はSVG。図の配置と塗り分けは定性的なもので、実測値ではない。社内向け資料。</footer></main></div></body></html>

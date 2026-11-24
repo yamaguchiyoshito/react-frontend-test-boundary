@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="478" viewBox="0 0 1000 478" role="img" aria-label="テストレベルと実行環境の2軸" aria-describedby="desc">
+<desc id="desc">横にFE単体、FE内部結合、FE・BE結合、ST（システムテスト）の4段階、縦にNode.js（Vitest）、仮想DOM（jsdom等）、実ブラウザ（Browser Mode等）、実システム環境（Playwright等）の4つの実行環境を置いた格子の図。FE単体×実ブラウザに「Playwrightでコンポーネントだけ」、FE内部結合×仮想DOMに「Vitest＋jsdomで画面全体の連携」を強調して置き、ほかにFE単体×Node.jsに「ロジック・Store」、FE単体×仮想DOMに「コンポーネント」、FE内部結合×実ブラウザに「画面遷移」、FE・BE結合×実システム環境に「実APIとの結合」、ST×実システム環境に「業務シナリオ」を置いている</desc>
+<rect width="100%" height="100%" fill="#fcfdfd"/>
+<text x="50" y="50" text-anchor="start" font-family="sans-serif" font-size="24" font-weight="700" fill="#18324b">実行環境はテストレベルを決めない。どちらも別々に選ぶ</text>
+<path d="M305.5 115.0 L952.0 115.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="962.0,115.0 950.0,122.0 950.0,108.0" fill="#607a91"/><rect x="220" y="96" width="171" height="38" rx="19.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="306" y="120" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#2b5f9e">FE単体</text><rect x="403" y="96" width="171" height="38" rx="19.0" fill="#e9e4f5" stroke="#8a6cc1" stroke-width="1"/><text x="488" y="120" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#6a4ea6">FE内部結合</text><rect x="586" y="96" width="171" height="38" rx="19.0" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="672" y="120" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">FE・BE結合</text><rect x="769" y="96" width="171" height="38" rx="19.0" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="854" y="120" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">ST（システムテスト）</text>
+<text x="135" y="112" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#55646d">横：テストレベル</text><text x="135" y="130" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#55646d">縦：実行環境</text>
+<rect x="60" y="150" width="150" height="60" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="135" y="176" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">Node.js</text><text x="135" y="200" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">Vitest</text>
+<rect x="220" y="150" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="403" y="150" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="586" y="150" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="769" y="150" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="60" y="218" width="150" height="60" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="135" y="244" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">仮想DOM</text><text x="135" y="268" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">jsdom等</text>
+<rect x="220" y="218" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="403" y="218" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="586" y="218" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="769" y="218" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="60" y="286" width="150" height="60" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="135" y="312" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">実ブラウザ</text><text x="135" y="336" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">Browser Mode等</text>
+<rect x="220" y="286" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="403" y="286" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="586" y="286" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="769" y="286" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="60" y="354" width="150" height="60" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/><text x="135" y="380" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#223e53">実システム環境</text><text x="135" y="404" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">Playwright等</text>
+<rect x="220" y="354" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="403" y="354" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="586" y="354" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="769" y="354" width="171" height="60" rx="6" fill="#fcfdfd" stroke="#8ea6b2" stroke-width="1"/>
+<rect x="220" y="286" width="171" height="60" rx="6" fill="#e1edf8" stroke="#607a91" stroke-width="1"/>
+<text x="306" y="312" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">Playwrightで</text><text x="306" y="330" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">コンポーネントだけ</text>
+<rect x="403" y="218" width="171" height="60" rx="6" fill="#e9e4f5" stroke="#8a6cc1" stroke-width="1"/>
+<text x="488" y="244" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#6a4ea6">Vitest＋jsdomで</text><text x="488" y="262" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#6a4ea6">画面全体の連携</text>
+<text x="306" y="185" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">ロジック・Store</text>
+<text x="306" y="253" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">コンポーネント</text>
+<text x="488" y="321" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">画面遷移</text>
+<text x="672" y="389" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">実APIとの結合</text>
+<text x="854" y="389" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">業務シナリオ</text>
+<text x="500" y="450" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#55646d">実ブラウザを使っても対象がコンポーネントだけなら単体。Vitestでも連携を見れば内部結合</text>
+</svg>
