@@ -200,6 +200,34 @@ def fig_01_four_levels():
 
 
 # =====================================================================
+# §1 テストを分ける3つの軸
+# =====================================================================
+def fig_01b_three_axes():
+    body = [title('大きさ・実行環境・Backend接続は別々の軸。区分は接続範囲で決める')]
+    rows = [
+        ('大きさ', ['関数', 'コンポーネント', '画面', 'システム'], {}),
+        ('実行環境', ['Node.js', '仮想DOM', '実ブラウザ'], {}),
+        ('Backend接続', ['なし', 'Mock', '実API'],
+         dict(fills={0: PRIMARY, 1: LINK, 2: ATTENTION}, colors={0: PRI_TEXT, 1: LINK_TEXT, 2: ATT_TEXT}, strokes={0: LINE, 1: LINK_LINE, 2: ATT_LINE})),
+    ]
+    ys = [100, 170, 240]
+    cols_by_row = []
+    for y, (label, labels, style) in zip(ys, rows):
+        body.append(box(60, y, 150, 38, NEUTRAL, label, None, 15))
+        ch, cols = chain(230, y, labels, total_w=710, **style)
+        body.append(ch)
+        cols_by_row.append(cols)
+    c = cols_by_row[0][1]
+    body.append(text(c[0] + c[1] / 2, 156, '「コンポーネント単位だから単体」？', 14, 700, ATT_TEXT))
+    c = cols_by_row[1][2]
+    body.append(text(c[0] + c[1] / 2, 226, '「ブラウザを使うから結合」？', 14, 700, ATT_TEXT))
+    body.append(bracket(230, 940, 296, '本記事の区分は、この軸（依存先との接続範囲）で決める', T1, 15, 700, up=False))
+    body.append(note(372, '3つの軸が混ざると、同じテストを単体と呼ぶ人と結合と呼ぶ人が出て、何を保証したのか判断できない'))
+    return svg(1000, 400, 'テストを分ける3つの軸', body,
+               desc='「大きさ」の軸に関数・コンポーネント・画面・システム、「実行環境」の軸にNode.js・仮想DOM・実ブラウザ、「Backend接続」の軸になし・Mock・実APIを、それぞれ左から右への矢印で並べ、コンポーネントの下に「コンポーネント単位だから単体」？、実ブラウザの下に「ブラウザを使うから結合」？と疑問を添え、Backend接続の軸をブラケットで括って「本記事の区分は、この軸（依存先との接続範囲）で決める」とした図')
+
+
+# =====================================================================
 # §2 顧客検索画面の構成と検証の範囲
 # =====================================================================
 def fig_02_search_page_structure():
@@ -552,6 +580,7 @@ def fig_08_ai_input_granularity():
 # =====================================================================
 FIGURES = {
     '01-four-levels': fig_01_four_levels,
+    '01b-three-axes': fig_01b_three_axes,
     '02-search-page-structure': fig_02_search_page_structure,
     '03-env-vs-level': fig_03_env_vs_level,
     '04-unit-test-types': fig_04_unit_test_types,
