@@ -9,6 +9,9 @@
   POSITIVE  Backend の完成を待たずに検証できる範囲（PG・UT 工程に入るもの）
   ATTENTION 実 Backend がないと検証できない事項、IT 工程へ持ち越される事項（1図に1系統）
   INK       結論・題名の強調（色ではなく太字）
+  WATER     NEUTRAL の濃い方。画面モックの行など、中立要素の中の濃淡にだけ使う（役割を持たない）
+  地が BG の箱  テストが検証する結果・生成物。役割色を持たず、枠線と見出しの色だけで属する役割を示す
+役割色の文字（PRI_TEXT など）とブラケットの色も同じ役割に従う。UI のエラー文言などの見た目に ATTENTION を使わない。
 1図で使う色相は最大3（NEUTRALは数えない）、地の塗りは最大4種。文字と地色のコントラスト比は4.5以上。
 数値を使う図は作らず、定性的な塗り分けと配置だけで示す。要素は2〜5個、矢印は1方向に限る。
 """
@@ -305,10 +308,10 @@ def fig_04c_store_test_scope():
     # 右：Storeを介した連動
     body.append(rect(530, 90, 410, 250, NEUTRAL, STROKE, 1))
     body.append(text(735, 120, 'Storeを介した連動を検証する（FE内部結合）', 16, 700, LINK_TEXT))
-    body.append(link(645, 198, 690, 234))
-    body.append(link(825, 198, 780, 234))
-    body.append(box(560, 150, 170, 48, LINK, '商品一覧', 'コンポーネント', 15, 14, LINK_LINE, 1, LINK_TEXT))
-    body.append(box(750, 150, 170, 48, LINK, 'カート表示', 'コンポーネント', 15, 14, LINK_LINE, 1, LINK_TEXT))
+    body.append(link(645, 198, 690, 234, LINK_LINE, 4))
+    body.append(link(825, 198, 780, 234, LINK_LINE, 4))
+    body.append(box(560, 150, 170, 48, PRIMARY, '商品一覧', 'コンポーネント', 15, 14, LINE, 1, PRI_TEXT))
+    body.append(box(750, 150, 170, 48, PRIMARY, 'カート表示', 'コンポーネント', 15, 14, LINE, 1, PRI_TEXT))
     body.append(box(635, 234, 200, 50, PRIMARY, 'カートStore', None, 16, 14, LINE, 1, PRI_TEXT))
     body.append(text(735, 318, '一覧で追加すると、カート表示の件数と合計が変わる', 14, 400, T1))
     body.append(text(735, 366, 'コンポーネント間の連動を見る', 15, 700, LINK_TEXT))
@@ -444,7 +447,7 @@ def fig_04b_component_states():
         elif name == 'Empty':
             body.append(lines(x + w / 2, y + 72, ['該当するデータが', 'ありません'], 14, 400, MUTED, lh=20))
         else:
-            body.append(text(x + w / 2, y + 80, 'データ取得に失敗しました', 14, 400, ATT_TEXT))
+            body.append(text(x + w / 2, y + 80, 'データ取得に失敗しました', 14, 400, MUTED))
         body.append(arrow(x + w / 2, y + h, x + w / 2, 254))
     body.append(box(60, 254, 880, 56, PRIMARY, 'Storyとして定義し、表示テストの入力にする', 'デザイン確認とテスト資産を共通化する', 16, 14, LINE, 1, PRI_TEXT))
     body.append(note(350, 'Loading・Empty・Errorは、状態として定義しなければ検証されない'))
@@ -486,8 +489,8 @@ def fig_06_process_mapping():
     body.append(card(cols[0][0], y, cols[1][0] + pw - cols[0][0], h, POSITIVE, '完了条件',
                      ['Backendに依存せず、Frontendの機能要求を満たしている', 'FE内部結合テストは技法上は結合テストでも、この工程に含める'],
                      hs=15, rs=14, stroke=POS_LINE, head_fill=POS_TEXT, top=30, lh=22))
-    body.append(card(cols[2][0], y, pw, h, NEUTRAL, '完了条件', ['実Backendとの連携を', '含めて機能要求を満たす'], hs=15, rs=14, top=30, lh=22))
-    body.append(card(cols[3][0], y, pw, h, NEUTRAL, '完了条件', ['システム全体として', '業務・非機能要求を満たす'], hs=15, rs=14, top=30, lh=22))
+    body.append(card(cols[2][0], y, pw, h, BG, '完了条件', ['実Backendとの連携を', '含めて機能要求を満たす'], hs=15, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, top=30, lh=22))
+    body.append(card(cols[3][0], y, pw, h, BG, '完了条件', ['システム全体として', '業務・非機能要求を満たす'], hs=15, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, top=30, lh=22))
     body.append(bracket(cols[0][0], cols[1][0] + pw, 300, 'Backendチームと並行して進められる', POS_TEXT, 15, 700, up=False))
     body.append(note(388, 'Frontendの工程完了を、Backendの完成に依存させずに判定できる'))
     return svg(1000, 416, 'テストレベルと開発工程の対応', body,
