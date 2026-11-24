@@ -265,28 +265,30 @@ React／Next.jsを前提とした標準テスト基盤は、次の構成がよ�
 
 ※ 図は概念上のテスト配分であり、テストケース数の固定比率を示すものではありません。
 
-## 8. AI駆動開発におけるテスト生成の単位（Skill案）
+## 8. AI駆動開発では、何を入力にどのテストを生成するか
 
-AIによるテスト生成を標準化する場合も、1つの汎用的なFrontendテスト生成Skillに集約するより、入力情報と検証責務に応じて分割する方がよいと考えます。Skillは、AIに特定の作業手順と入出力を定義して渡す単位です。名称はいずれも案です。
+AIにテストを生成させる場合も、「この画面のテストを作って」という1つの指示に集約するより、テスト種別とテストレベルごとに、どの成果物を入力にして、どのテストを生成するかを分けて定義する方がよいと考えます。生成の単位は、§4の8種別と§1の4段階に対応させます。
 
-| テスト生成Skill案 | 主なインプット | 成果物 |
-| --- | --- | --- |
-| Logic Test Generator | 関数・業務ルール | Vitest |
-| Validation Test Generator | Zod Schema・項目定義 | Vitest |
-| Hooks Test Generator | Hook・状態遷移定義 | Vitest |
-| Store Test Generator | Store・状態遷移定義 | Vitest |
-| Component Test Generator | Props・Story・コンポーネント仕様 | Testing Library |
-| Component Quality Test Generator | Story・デザイン仕様 | VRT・アクセシビリティテスト |
-| API Client Test Generator | OpenAPI・通信処理 | Vitest・MSW |
-| Frontend Integration Test Generator | 画面仕様・状態遷移・OpenAPI | Testing Library・Playwright・MSW |
-| API Integration Test Generator | OpenAPI・結合テスト仕様 | 実API結合テスト |
-| E2E Test Generator | 業務フロー・システム要求 | Playwright |
+| テストレベル | 生成するテスト | インプットにする成果物 | 生成物 |
+| --- | --- | --- | --- |
+| FE単体 | ロジックテスト | 関数のソースコード、業務ルールの仕様 | Vitest |
+| FE単体 | バリデーションテスト | Zod Schema、項目定義（必須・桁・型・範囲） | Vitest |
+| FE単体 | Hooksテスト | Hookのソースコード、状態遷移の定義 | Vitest、Testing Library |
+| FE単体 | 状態管理テスト | Storeの定義、状態遷移の定義 | Vitest |
+| FE単体 | コンポーネント表示・操作テスト | Props定義、Story、コンポーネント仕様 | Testing Library |
+| FE単体 | コンポーネント品質テスト | Story、デザイン仕様 | VRT、アクセシビリティテスト |
+| FE単体 | APIクライアントテスト | OpenAPI定義、通信処理のソースコード | Vitest、MSW |
+| FE内部結合 | 画面・画面遷移のテスト | 画面仕様、画面遷移、状態遷移、OpenAPI定義 | Testing Library、Playwright、MSW |
+| FE・BE結合 | 実APIとの結合テスト | OpenAPI定義、結合テスト仕様 | Playwright（実API） |
+| ST | 業務シナリオのテスト | 業務フロー、システム要求 | Playwright |
 
-特に、単体テストとFrontend内部結合テストでは、AIに与えるべき情報の粒度が異なります。
+表のとおり、単体テストとFrontend内部結合テストでは、AIに与えるべき情報の粒度が異なります。
 
 単体テストではソースコードと個別仕様が中心になります。一方、Frontend内部結合テストでは、画面仕様、画面遷移、状態遷移、API契約など、複数の成果物間の関係を理解させる必要があります。
 
 ![テスト生成に与える情報の粒度](assets/08-ai-input-granularity.svg)
+
+インプットが揃っていない種別のテストは、AIでも生成できません。入力制約が画面のコードに埋め込まれていればバリデーションテストは切り出せず、OpenAPI定義がなければAPIクライアントテストとFrontend内部結合テストのMockは手書きになります。テスト生成を前提にするなら、Schema、Story、状態遷移、OpenAPI定義といった成果物を先に整えることが、生成の単位を分けることと同じくらい重要です。
 
 ## 9. おわりに：Frontend単体テストの完了を何で判断するか
 
