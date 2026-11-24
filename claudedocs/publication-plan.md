@@ -163,8 +163,8 @@ push は指示があるまで行わない。
 
 ## 8. 決定と実施（2026-11-24）
 
-- 決定：D1 公開先はオフライン単一HTML（GitHub Pages は使わない）。D2 `origin`（前の記事の `react-accessibility-testing-guide.git`）を外し、旧 `main` を `archive/a11y-main` として残したうえで orphan ブランチ `main-next` に本記事の履歴を作った。旧 `main` の削除と `main-next` → `main` の改名は、自動モードでは実行できないため著者が行う（下記コマンド）。前2記事の `feature/*` 18本は残した。D3 章の並びは案B。D4 文体は「です・ます」。D5 §8 の AI の章は残す。D6 結論文は案A。D7 §4.8 にアクセシビリティ記事への参照を1文。D8 コード例は足さない。
-- 著者が実行する git の仕上げ：`git branch -D main && git branch -m main-next main`
+- 決定：D1 公開先はオフライン単一HTML（GitHub Pages は使わない）。D2 `origin`（前の記事の `react-accessibility-testing-guide.git`）を外し、旧 `main` を `archive/a11y-main` として残したうえで orphan ブランチ `main-next` に本記事の履歴を作った。旧 `main` の削除と `main-next` → `main` の改名は、著者の指示を受けて同日に実施した。前2記事の `feature/*` 18本は残した。D3 章の並びは案B。D4 文体は「です・ます」。D5 §8 の AI の章は残す。D6 結論文は案A。D7 §4.8 にアクセシビリティ記事への参照を1文。D8 コード例は足さない。
+- git の仕上げ（実施済み）：`git branch -D main && git branch -m main-next main`。現在の `main` は本記事の履歴だけからなる。
 - 実施：§0.1 の P1〜P10 をすべて反映し、§2 の構成（9章＋参考文献・注記、脚注6件）で本文を書き直した。図版は A 8点（01・02・03・04・04b・05・06・07）に加え、B の 08（テスト生成に与える情報の粒度）を採用し計9点。B の 02b は図 02 の凡例が同じ内容を担うため、09 は図 06 が完了条件と実Backendの要否を担うため見送り。`check_figures.py`・`build.py`・`build_single.py`・`check_html.py`・`export_png.py --check` はすべて exit 0。
 - 360px 幅の確認（内蔵ブラウザの JavaScript で `.table-wrap` の scrollWidth を計測）：横スクロールになるのは §5 のマトリクス（5列）だけ。ページ自体は広がらない。README の編集ルール 9 に許容として記した。375px でも同じ。ブラウザペインが非表示だったため、図版の目視は `assets/*.png` を直接開いて行った。ダークモードは図の地が明色のままで、前2記事と同じ扱い。
 - ローカルプレビューのポートは 8765 が別記事（Accessibility_test）のサーバーに使われていたため、`.claude/launch.json` と README を 8766 に変えた。
