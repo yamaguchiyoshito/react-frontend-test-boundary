@@ -273,7 +273,7 @@ AIにテストを生成させる場合も、「この画面のテストを作っ
 | FE単体 | バリデーションテスト | Zod Schema、項目定義（必須・桁・型・範囲） | Vitest |
 | FE単体 | Hooksテスト | Hookのソースコード、状態遷移の定義 | Vitest、Testing Library |
 | FE単体 | 状態管理テスト | Storeの定義、状態遷移の定義 | Vitest |
-| FE単体 | コンポーネント表示・操作テスト | Props定義、Story、コンポーネント仕様 | Testing Library |
+| FE単体 | コンポーネント表示・操作テスト | Props定義、コンポーネント仕様、表示状態の一覧 | Testing Library、Storybook（Storyとplay関数） |
 | FE単体 | Visual Regression Test | Story、承認済みの基準画像 | Storybook、Playwright（スクリーンショット比較） |
 | FE単体 | Accessibility Test | Story、ARIA・ラベルの実装規約 | Storybook、Playwright、axe-core |
 | FE単体 | Responsive Test | Story、ブレークポイントの定義 | Storybook（Viewport）、Playwright |
@@ -283,6 +283,8 @@ AIにテストを生成させる場合も、「この画面のテストを作っ
 | FE内部結合 | 画面・画面遷移のテスト | 画面仕様、画面遷移、状態遷移、OpenAPI定義 | Testing Library、Playwright、MSW |
 | FE・BE結合 | 実APIとの結合テスト | OpenAPI定義、結合テスト仕様 | Playwright（実API） |
 | ST | 業務シナリオのテスト | 業務フロー、システム要求 | Playwright |
+
+コンポーネント表示・操作テストでは、Testing Libraryのテストコードだけでなく、StorybookのStoryと、Story上で操作を再生するplay関数も生成物です。生成したStoryは、次の品質テストの入力になります。
 
 コンポーネント品質テストは、§4.8の5つの観点ごとに行を分けています。Storyは共通の入力ですが、観点ごとに基準画像、実装規約、ブレークポイント、操作仕様、テストデータと、加えて渡す成果物が異なるからです。
 

@@ -738,8 +738,8 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 </tr>
 <tr>
 <td>コンポーネント表示・操作テスト</td>
-<td>Props定義、Story、コンポーネント仕様</td>
-<td>Testing Library</td>
+<td>Props定義、コンポーネント仕様、表示状態の一覧</td>
+<td>Testing Library、Storybook（Storyとplay関数）</td>
 </tr>
 <tr>
 <td>Visual Regression Test</td>
@@ -791,6 +791,7 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 </tr>
 </tbody>
 </table></div>
+<p>コンポーネント表示・操作テストでは、Testing Libraryのテストコードだけでなく、StorybookのStoryと、Story上で操作を再生するplay関数も生成物です。生成したStoryは、次の品質テストの入力になります。</p>
 <p>コンポーネント品質テストは、§4.8の5つの観点ごとに行を分けています。Storyは共通の入力ですが、観点ごとに基準画像、実装規約、ブレークポイント、操作仕様、テストデータと、加えて渡す成果物が異なるからです。</p>
 <p>表のとおり、単体テストとFrontend内部結合テストでは、AIに与えるべき情報の粒度が異なります。</p>
 <p>単体テストではソースコードと個別仕様が中心になります。一方、Frontend内部結合テストでは、画面仕様、画面遷移、状態遷移、API契約など、複数の成果物間の関係を理解させる必要があります。</p>
