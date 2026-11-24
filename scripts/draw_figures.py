@@ -318,6 +318,112 @@ def fig_04c_store_test_scope():
 
 
 # =====================================================================
+# 共通部品：種別ごとの「入力 → 対象 → 検証する結果」の流れ（4.1・4.2・4.6 で使う）
+# =====================================================================
+def fan_in(labels, center_y, target_x, target_y, x=60, w=170, h=34, gap=10, fill=NEUTRAL, color=T1, stroke=STROKE):
+    """左に入力のピルを縦に並べ、それぞれから対象の左辺の1点へ矢印を集める。"""
+    n = len(labels)
+    total = n * h + (n - 1) * gap
+    y0 = center_y - total / 2
+    out = []
+    for i, s in enumerate(labels):
+        y = y0 + i * (h + gap)
+        out.append(arrow(x + w, y + h / 2, target_x, target_y))
+        out.append(pill(x, y, w, h, s, fill, 14, 700, color, stroke))
+    return ''.join(out)
+
+
+def outside(y, s, fill=NEUTRAL, color=T1, stroke=STROKE):
+    """図の下の破線の箱：テストに使わないもの、保証できないもの。"""
+    return box(60, y, 880, 44, fill, s, None, 15, 14, stroke, 1, color, dashed=True)
+
+
+# =====================================================================
+# §4.1 ロジックテストの対象と検証
+# =====================================================================
+def fig_04d_logic_test():
+    body = [title('UIから切り離した関数に入力を与え、戻り値だけを検証する')]
+    body.append(fan_in(['正常値', '境界値', '異常値'], 194, 300, 194))
+    body.append(box(300, 140, 260, 108, PRIMARY, '純粋関数', '金額計算・日付変換・判定', 17, 14, LINE, 1, PRI_TEXT))
+    body.append(arrow(560, 194, 620, 194))
+    body.append(box(620, 140, 320, 108, BG, '戻り値を期待値と比較', '例外・端数・境界値も含めて', 16, 14, LINE, 1, T1))
+    body.append(outside(288, 'コンポーネント・ブラウザ・APIを起動しない'))
+    body.append(note(368, '最も高速で安定し、AIによるテストコード生成にも向く'))
+    return svg(1000, 396, 'ロジックテストの対象と検証', body,
+               desc='左の「正常値」「境界値」「異常値」から中央の「純粋関数（金額計算・日付変換・判定）」へ矢印を集め、右の「戻り値を期待値と比較（例外・端数・境界値も含めて）」へ矢印を引き、下に破線の箱「コンポーネント・ブラウザ・APIを起動しない」を置いた図')
+
+
+# =====================================================================
+# §4.2 バリデーションテストの対象と検証
+# =====================================================================
+def fig_04e_validation_test():
+    body = [title('Schemaに入力を通し、通過するかとエラーメッセージを検証する')]
+    body.append(fan_in(['正常な入力', '境界の入力', '不正な入力'], 194, 280, 194))
+    body.append(box(280, 140, 280, 108, PRIMARY, 'バリデーションSchema', '必須・文字数・文字種・範囲・相関', 16, 14, LINE, 1, PRI_TEXT))
+    body.append(arrow(560, 194, 620, 153))
+    body.append(arrow(560, 194, 620, 235))
+    body.append(box(620, 128, 320, 50, BG, '通過：値をそのまま返す', None, 15, 14, LINE, 1, T1))
+    body.append(box(620, 210, 320, 50, BG, 'エラー：項目ごとのメッセージ', None, 15, 14, LINE, 1, T1))
+    body.append(outside(288, 'フォームや画面を起動せず、Schemaだけで検証する'))
+    body.append(note(368, 'Zodなどで入力制約を画面から分離しておくことが前提'))
+    return svg(1000, 396, 'バリデーションテストの対象と検証', body,
+               desc='左の「正常な入力」「境界の入力」「不正な入力」から中央の「バリデーションSchema（必須・文字数・文字種・範囲・相関）」へ矢印を集め、右の「通過：値をそのまま返す」「エラー：項目ごとのメッセージ」の2つへ矢印を分け、下に破線の箱「フォームや画面を起動せず、Schemaだけで検証する」を置いた図')
+
+
+# =====================================================================
+# §4.3 Hooksテストの対象と検証
+# =====================================================================
+def fig_04f_hooks_test():
+    body = [title('Hookを直接呼び出し、公開されたstateの遷移と副作用の扱いを検証する')]
+    body.append(box(300, 96, 400, 60, PRIMARY, 'useCustomerSearch', '公開インターフェース：stateと関数', 16, 14, LINE, 1, PRI_TEXT))
+    body.append(text(500, 190, 'Hookが返す state の遷移', 14, 700, T2))
+    ch, cols = chain(60, 204, ['初期状態', '非同期処理中', '成功／エラー', '再取得・キャンセル・解放'])
+    body.append(ch)
+    pw = cols[0][1]
+    for (x, _), s in zip(cols, ['初期値が正しい', 'loading が true', 'data または error', 'リソースを解放する']):
+        body.append(text(x + pw / 2, 270, s, 14, 400, T1))
+    body.append(outside(300, 'コンポーネントを描画せず、renderHookでHookを直接呼び出す'))
+    body.append(note(380, '検証するのは公開された state と関数であり、内部の実装ではない'))
+    return svg(1000, 408, 'Hooksテストの対象と検証', body,
+               desc='上に「useCustomerSearch（公開インターフェース：stateと関数）」、その下に「初期状態」「非同期処理中」「成功／エラー」「再取得・キャンセル・解放」の4状態を左から右へ1本の矢印でつなぎ、各状態の下に「初期値が正しい」「loading が true」「data または error」「リソースを解放する」を添え、下に破線の箱「コンポーネントを描画せず、renderHookでHookを直接呼び出す」を置いた図')
+
+
+# =====================================================================
+# §4.6 コンポーネント操作テストの対象と検証
+# =====================================================================
+def fig_04g_operation_test():
+    body = [title('利用者の操作を与え、画面から観測できる結果だけを検証する')]
+    body.append(fan_in(['クリック', 'テキスト入力', 'キーボード操作', 'フォーカス移動'], 194, 300, 194))
+    body.append(box(300, 140, 260, 108, PRIMARY, 'コンポーネント', '検索フォーム・ダイアログなど', 17, 14, LINE, 1, PRI_TEXT))
+    body.append(arrow(560, 194, 620, 194))
+    body.append(box(620, 140, 320, 108, BG, '観測できる結果', '表示・活性／非活性・イベント発火', 16, 14, LINE, 1, T1))
+    body.append(outside(288, '内部実装やStateの値、DOM構造の詳細は検証しない'))
+    body.append(note(368, '利用者がソフトウェアを使う方法に近いテストほど信頼できる（Testing Library）'))
+    return svg(1000, 396, 'コンポーネント操作テストの対象と検証', body,
+               desc='左の「クリック」「テキスト入力」「キーボード操作」「フォーカス移動」から中央の「コンポーネント（検索フォーム・ダイアログなど）」へ矢印を集め、右の「観測できる結果（表示・活性／非活性・イベント発火）」へ矢印を引き、下に破線の箱「内部実装やStateの値、DOM構造の詳細は検証しない」を置いた図')
+
+
+# =====================================================================
+# §4.7 APIクライアントテストの対象と検証
+# =====================================================================
+def fig_04h_api_client_test():
+    body = [title('MSWで応答を差し替え、リクエストの組み立てと応答の処理を検証する')]
+    body.append(pill(60, 130, 200, 40, '検索条件・登録データ', NEUTRAL, 14, 700, T1))
+    body.append(arrow(260, 150, 300, 150))
+    body.append(box(300, 110, 240, 80, PRIMARY, 'API Client', 'リクエスト生成・応答処理', 16, 14, LINE, 1, PRI_TEXT))
+    body.append(arrow(540, 150, 600, 150))
+    body.append(box(600, 110, 340, 80, LINK, 'MSW', '200／400／401・403／500／通信失敗を再現', 16, 14, LINK_LINE, 1, LINK_TEXT))
+    body.append(link(420, 190, 420, 230, LINE, 2))
+    body.append(link(770, 190, 770, 230, LINK_LINE, 2))
+    body.append(box(260, 230, 320, 60, BG, '検証：リクエストの組み立て', 'Query Parameter・Request Body', 15, 14, LINE, 1, T1))
+    body.append(box(600, 230, 340, 60, BG, '検証：応答ごとの処理', '正常・入力エラー・認証認可・サーバーエラー', 15, 14, LINK_LINE, 1, T1))
+    body.append(outside(320, '実Backendとの整合は保証できない：契約テストとFE・BE結合テストで担保する', ATTENTION, ATT_TEXT, ATT_LINE))
+    body.append(note(400, 'Backendがなくても、通信処理の正常系と異常系をすべて再現できる'))
+    return svg(1000, 428, 'APIクライアントテストの対象と検証', body,
+               desc='左の「検索条件・登録データ」から「API Client（リクエスト生成・応答処理）」へ、さらに「MSW（200／400／401・403／500／通信失敗を再現）」へ矢印を引き、API Clientの下に「検証：リクエストの組み立て（Query Parameter・Request Body）」、MSWの下に「検証：応答ごとの処理（正常・入力エラー・認証認可・サーバーエラー・リトライ）」を線で結び、下に橙の破線の箱「実Backendとの整合は保証できない：契約テストとFE・BE結合テストで担保する」を置いた図')
+
+
+# =====================================================================
 # §4.5 コンポーネントの4つの表示状態
 # =====================================================================
 def fig_04b_component_states():
@@ -451,6 +557,11 @@ FIGURES = {
     '04-unit-test-types': fig_04_unit_test_types,
     '04b-component-states': fig_04b_component_states,
     '04c-store-test-scope': fig_04c_store_test_scope,
+    '04d-logic-test': fig_04d_logic_test,
+    '04e-validation-test': fig_04e_validation_test,
+    '04f-hooks-test': fig_04f_hooks_test,
+    '04g-operation-test': fig_04g_operation_test,
+    '04h-api-client-test': fig_04h_api_client_test,
     '05-main-level-per-type': fig_05_main_level_per_type,
     '06-process-mapping': fig_06_process_mapping,
     '07-test-architecture': fig_07_test_architecture,

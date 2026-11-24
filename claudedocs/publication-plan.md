@@ -169,3 +169,4 @@ push は指示があるまで行わない。
 - 360px 幅の確認（内蔵ブラウザの JavaScript で `.table-wrap` の scrollWidth を計測）：横スクロールになるのは §5 のマトリクス（5列）だけ。ページ自体は広がらない。README の編集ルール 9 に許容として記した。375px でも同じ。ブラウザペインが非表示だったため、図版の目視は `assets/*.png` を直接開いて行った。ダークモードは図の地が明色のままで、前2記事と同じ扱い。
 - ローカルプレビューのポートは 8765 が別記事（Accessibility_test）のサーバーに使われていたため、`.claude/launch.json` と README を 8766 に変えた。
 - 追加（同日）：著者の依頼で §4.4「状態管理テスト」に図「状態管理テストの範囲」（04c-store-test-scope）を足した。左にStore単体（操作 → カートStore → 値の検証）、右にStoreを介した2つのコンポーネントの連動を置き、同じStoreでも見る範囲で区分が変わることを示す。図版は計10点。
+- 追加（同日）：著者の依頼で §4.1・4.2・4.3・4.6・4.7 にも図を足した（04d-logic-test、04e-validation-test、04f-hooks-test、04g-operation-test、04h-api-client-test）。4.1・4.2・4.6 は共通部品 `fan_in()`（入力 → 対象 → 検証する結果）と `outside()`（テストに使わないものの破線の箱）で同じ形にし、4.3 は Hook が返す state の遷移を `chain()` で、4.7 は API Client → MSW の流れと、実Backendとの整合は保証できないことを ATTENTION の破線で示す。図版は計15点。
