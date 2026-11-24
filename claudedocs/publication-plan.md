@@ -186,3 +186,4 @@ push は指示があるまで行わない。
 - 変更（同日）：著者の判断で本文の章参照を「§5」の形から「5章」「4.8節」の形に改めた（5か所）。本文に § は残っていない。README と本計画書の § 表記はそのまま。
 - 変更（同日）：README の編集ルール 9 の章参照も「5章」「8章」「10章」の形に揃えた。README に § は残っていない。
 - 公開（同日）：著者の指示で GitHub の非公開リポジトリ `yamaguchiyoshito/react-frontend-test-boundary` を作り、`main` を push した（D1 の「push は指示があるまでしない」を解除）。README の「配布する」に raw URL を足した。公開範囲の変更（public 化）は著者判断。
+- 公開（同日）：著者の指示でリポジトリを public にし、GitHub Pages（ソースは Actions）で閲覧サイトを公開した。`.github/workflows/pages.yml`（test-automation-cost-structure と同じ構成。Pandoc 3.7.0.2 固定、check_figures → build → build_single → check_html → Pages へ配置）を足し、`site.json` の `url` を https://yamaguchiyoshito.github.io/react-frontend-test-boundary/ にした。README の「外部公開は行わず」の記述を改め、公開サイトの節を足した。D1 を撤回。

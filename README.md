@@ -16,7 +16,9 @@ Reactを用いたFrontend開発で、単体テストはどこまでで、どこ�
 6. 実Backendとの結合によって初めて検証できる事項は、API契約の整合、認証認可の実際、永続化とデータ整合、実データに依存する振る舞い、環境・インフラ依存、非同期・時間依存の処理の6種である。PG・UT工程の完了時にこれらを未検証の事項として明示しておけば、IT工程で見つかる不具合は接続に関するものに限られる。6種を29の観点（確認方法付き）に展開した表を置き、FE・BE結合テストのテストケースの骨子として使えるようにしている。
 7. AIにテストを生成させる場合も、テスト種別とテストレベルごとに、どの成果物を入力にどのテストを生成するかを分けて定義する。単体テストはソースコードと個別仕様、Frontend内部結合テストは画面仕様・画面遷移・状態遷移・API契約の関係を入力にするので、粒度が異なる。Schema・Story・OpenAPI定義などの成果物が揃っていなければ生成できない。
 
-本文は `ARTICLE.md` の1記事で、連載形式ではない。図版は `assets/` のSVGで、すべて `scripts/draw_figures.py` が生成する。社内向け資料のため、GitHub Pagesなどの外部公開は行わず、オフライン閲覧用の単一HTMLで配布する。
+本文は `ARTICLE.md` の1記事で、連載形式ではない。図版は `assets/` のSVGで、すべて `scripts/draw_figures.py` が生成する。閲覧サイトは GitHub Pages で公開し、合わせてオフライン閲覧用の単一HTMLでも配布する。
+
+公開サイト：https://yamaguchiyoshito.github.io/react-frontend-test-boundary/
 
 ## ファイル構成
 
@@ -28,6 +30,7 @@ Frontend_test/
 ├── assets/                    # 図（SVG）と同名の PNG（幅2000px）。ファイル名は章番号で始める
 ├── dist/offline.html          # 配布用の単一HTML（ビルド成果物の控え。build_single.py が更新）
 ├── site-src/styles.css        # 閲覧サイトのスタイル（前の記事と共通）
+├── .github/workflows/pages.yml  # main への push で閲覧サイトをビルドし GitHub Pages へ配置する
 ├── scripts/
 │   ├── draw_figures.py        # 全図版を決定論的に生成（Python標準ライブラリのみ）
 │   ├── check_figures.py       # SVGの整形性・最小フォント・配色・コントラスト・箱からのはみ出し・文字重なりを検査
@@ -40,6 +43,10 @@ Frontend_test/
 ```
 
 生成物 `_site/` は `.gitignore` で除外する。`dist/offline.html` だけは配布用に管理対象とする。
+
+## 公開サイトで読む
+
+https://yamaguchiyoshito.github.io/react-frontend-test-boundary/ を開く。`main` へ push すると `.github/workflows/pages.yml` が下記の6コマンド（PNG の書き出しを除く）を実行し、`_site/` を GitHub Pages へ配置する。いずれかの検査が失敗すると配置されない。
 
 ## GitLab・GitHubで読む
 
@@ -64,13 +71,13 @@ python3 scripts/check_html.py
 
 `dist/offline.html` は記事をファイル1つにまとめたもので、図を data URI として埋め込み、インターネット接続なしでも開ける。社内への配布はこのファイル1つを共有すればよい。外部スクリプト・外部フォント・外部通信は使っていない。
 
-ビルド環境がなくても、GitHub のファイル表示（`dist/offline.html`）右上の「Download raw file」か、次の URL からそのまま取得できる（リポジトリは非公開なので、閲覧権限のあるアカウントでログインしている必要がある）。
+ビルド環境がなくても、GitHub のファイル表示（`dist/offline.html`）右上の「Download raw file」か、次の URL からそのまま取得できる。
 
 https://github.com/yamaguchiyoshito/react-frontend-test-boundary/raw/main/dist/offline.html
 
 個別の図を別の資料に貼るときは `assets/` の PNG（SVG と同名、幅2000px）を使う。本文や図を変えたら `scripts/build_single.py` を実行して `dist/offline.html` も更新し、一緒にコミットする。
 
-CIで検証する場合は、上記の6コマンドを順に実行し、いずれかが失敗したら配布しない。
+`.github/workflows/pages.yml` が同じ検査を `main` への push ごとに実行する。いずれかが失敗したら配布しない。
 
 ## 編集ルール
 
