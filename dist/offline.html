@@ -119,7 +119,7 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 <input type="checkbox" id="toc-state" class="toc-state" aria-label="目次を開く">
 <header class="topbar"><a href="#" class="brand">React／Frontendにおける単体テストと結合テストの境界<span>FRONTEND TEST LEVELS</span></a><div class="topbar-actions"><label class="toc-toggle" for="toc-state"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>目次</label></div></header>
 <label class="toc-backdrop" for="toc-state" aria-hidden="true"></label>
-<aside class="toc-drawer" aria-label="記事の目次"><div class="toc-drawer-head"><strong>記事の目次</strong><label class="toc-close" for="toc-state" title="閉じる"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></label></div><nav aria-label="記事の目次"><a class="chapter-link" href="#単体テストと結合テストの境界をどう定義するか"><span>01</span>単体テストと結合テストの境界をどう定義するか</a><a class="chapter-link" href="#境界はどこにあるか顧客検索画面の例"><span>02</span>境界はどこにあるか：顧客検索画面の例</a><a class="chapter-link" href="#ブラウザを使用するかどうかは別の分類軸"><span>03</span>ブラウザを使用するかどうかは別の分類軸</a><a class="chapter-link" href="#frontend単体テストの8種別"><span>04</span>Frontend単体テストの8種別</a><a class="chapter-link" href="#テストレベルとテスト種別のマトリクス"><span>05</span>テストレベルとテスト種別のマトリクス</a><a class="chapter-link" href="#受託開発の工程へのマッピング"><span>06</span>受託開発の工程へのマッピング</a><a class="chapter-link" href="#推奨技術スタックとテストアーキテクチャ"><span>07</span>推奨技術スタックとテストアーキテクチャ</a><a class="chapter-link" href="#ai駆動開発では何を入力にどのテストを生成するか"><span>08</span>AI駆動開発では、何を入力にどのテストを生成するか</a><a class="chapter-link" href="#frontend単体テストの完了を何で判断するか"><span>09</span>Frontend単体テストの完了を何で判断するか</a><a class="chapter-link" href="#実backendとの結合によって初めて検証できる事項"><span>10</span>実Backendとの結合によって初めて検証できる事項</a><a class="chapter-link" href="#おわりに"><span>11</span>おわりに</a></nav><div class="toc-drawer-foot"><a href="#参考文献注記">参考文献・注記</a><br><a href="https://yamaguchiyoshito.github.io/react-frontend-test-boundary/offline.html" download>単一HTML（オフライン閲覧用）</a></div></aside>
+<aside class="toc-drawer" aria-label="記事の目次"><div class="toc-drawer-head"><strong>記事の目次</strong><label class="toc-close" for="toc-state" title="閉じる"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></label></div><nav aria-label="記事の目次"><a class="chapter-link" href="#単体テストと結合テストの境界をどう定義するか"><span>01</span>単体テストと結合テストの境界をどう定義するか</a><a class="chapter-link" href="#境界はどこにあるか顧客検索画面の例"><span>02</span>境界はどこにあるか：顧客検索画面の例</a><a class="chapter-link" href="#ブラウザを使用するかどうかは別の分類軸"><span>03</span>ブラウザを使用するかどうかは別の分類軸</a><a class="chapter-link" href="#frontend単体テストの8種別"><span>04</span>Frontend単体テストの8種別</a><a class="chapter-link" href="#テストレベルとテスト種別のマトリクス"><span>05</span>テストレベルとテスト種別のマトリクス</a><a class="chapter-link" href="#受託開発の工程へのマッピング"><span>06</span>受託開発の工程へのマッピング</a><a class="chapter-link" href="#推奨技術スタックとテストアーキテクチャ"><span>07</span>推奨技術スタックとテストアーキテクチャ</a><a class="chapter-link" href="#ai駆動開発では何を入力にどのテストを生成するか"><span>08</span>AI駆動開発では、何を入力にどのテストを生成するか</a><a class="chapter-link" href="#frontend単体テストの完了を何で判断するか"><span>09</span>Frontend単体テストの完了を何で判断するか</a><a class="chapter-link" href="#実backendとの結合によって初めて検証できる事項"><span>10</span>実Backendとの結合によって初めて検証できる事項</a><a class="chapter-link" href="#おわりに"><span>11</span>おわりに</a><a class="chapter-link" href="#付録frontendテストの観点一覧"><span>A</span>付録：Frontendテストの観点一覧</a></nav><div class="toc-drawer-foot"><a href="#参考文献注記">参考文献・注記</a><br><a href="https://yamaguchiyoshito.github.io/react-frontend-test-boundary/offline.html" download>単一HTML（オフライン閲覧用）</a></div></aside>
 <div class="layout"><main id="main" tabindex="-1"><article><h1 id="reactfrontendにおける単体テストと結合テストの境界">React／Frontendにおける単体テストと結合テストの境界</h1>
 <p><strong>Frontendのテストは、単体テストと結合テストの間にFrontend内部結合テストを置いた4段階で分ける。境界は、使う道具や実行環境ではなく、個別の責務を検証するのか、責務間の連携を検証するのかで引く。</strong></p>
 <h2 id="単体テストと結合テストの境界をどう定義するか">1. 単体テストと結合テストの境界をどう定義するか</h2>
@@ -998,6 +998,255 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 <h2 id="おわりに">11. おわりに</h2>
 <p>本記事では、Frontendのテストを、FE単体・FE内部結合・FE・BE結合・システムテストの4段階で分け、単体テストとFrontend内部結合テストの境界を、個別の責務を検証するのか、責務間の連携を検証するのかで引きました。ブラウザを使うかどうかは別の軸です。Frontend内部結合テストはBackendの完成を待たずに実施でき、プロジェクト管理上はPG・UT工程に含めます。</p>
 <p>Frontend単体テストの完了は、コードカバレッジではなく、9章の5つの条件を満たし、10章の事項が未検証として分離されていることで判断します。この整理をFrontendチームとBackendチームで共有しておけば、どの工程で何を保証したのかを同じ言葉で話せます。</p>
+<h2 id="付録frontendテストの観点一覧">付録：Frontendテストの観点一覧</h2>
+<p>テストケースを作るときのチェックリストとして、本文で扱ったテスト種別ごとの観点と確認方法を1つの表にまとめます。4章の8種別と、FE内部結合・FE・BE結合・STの各1行分を、1章の4段階の順に並べています。「確認方法」を操作手順に写し、期待する結果は対象の仕様から書きます。</p>
+<div class="table-wrap"><table class="table-grid">
+<thead>
+<tr>
+<th>テスト種別</th>
+<th>観点</th>
+<th>確認方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="6">ロジックテスト（FE単体）</td>
+<td>計算・端数処理</td>
+<td>代表値と端数が出る値で関数を呼び、戻り値を期待値と比較する</td>
+</tr>
+<tr>
+<td>日付・時刻の変換</td>
+<td>タイムゾーン・月末・うるう年・年またぎの値で変換する</td>
+</tr>
+<tr>
+<td>ソート・フィルタリング</td>
+<td>同値・空・未定義を含む配列で、並び順と件数を確認する</td>
+</tr>
+<tr>
+<td>表示用データへの変換</td>
+<td>API応答の形から画面の形へ変換し、欠損項目の扱いを確認する</td>
+</tr>
+<tr>
+<td>業務ルールの判定</td>
+<td>判定の境界になる条件の組み合わせで真偽を確認する</td>
+</tr>
+<tr>
+<td>境界値・異常値</td>
+<td>0・負数・最大値・null・undefined・空文字で呼び、例外か既定値かを確認する</td>
+</tr>
+<tr>
+<td rowspan="6">バリデーションテスト（FE単体）</td>
+<td>必須入力</td>
+<td>未入力・空白のみ・nullをSchemaに通す</td>
+</tr>
+<tr>
+<td>文字数・文字種</td>
+<td>上限・上限＋1・下限−1の文字数と、全角半角・禁止文字で通す</td>
+</tr>
+<tr>
+<td>数値範囲・日付範囲</td>
+<td>範囲の両端とその外側の値で通す</td>
+</tr>
+<tr>
+<td>項目間相関</td>
+<td>開始日が終了日より後など、矛盾する組み合わせで通す</td>
+</tr>
+<tr>
+<td>エラーメッセージ</td>
+<td>項目ごとのメッセージの文言とキーが仕様どおりかを確認する</td>
+</tr>
+<tr>
+<td>正常値の通過</td>
+<td>代表的な正しい入力がそのまま返ることを確認する</td>
+</tr>
+<tr>
+<td rowspan="6">Hooksテスト（FE単体）</td>
+<td>初期状態</td>
+<td>renderHook直後のstateと公開された関数を確認する</td>
+</tr>
+<tr>
+<td>状態変更</td>
+<td>公開された関数を呼び、stateの遷移を確認する</td>
+</tr>
+<tr>
+<td>非同期処理</td>
+<td>取得の開始・完了・失敗でloading・data・errorが切り替わることを確認する</td>
+</tr>
+<tr>
+<td>エラー処理</td>
+<td>失敗応答を与え、errorの内容と再取得できることを確認する</td>
+</tr>
+<tr>
+<td>キャンセル・再取得</td>
+<td>処理中の再呼び出しとunmountで、古い結果が反映されないことを確認する</td>
+</tr>
+<tr>
+<td>リソース解放</td>
+<td>unmount後にタイマー・購読・リスナーが残らないことを確認する</td>
+</tr>
+<tr>
+<td rowspan="6">状態管理テスト（FE単体）</td>
+<td>初期状態</td>
+<td>Store生成直後のstateを確認する</td>
+</tr>
+<tr>
+<td>Actionごとの更新</td>
+<td>各Actionを送り、stateの差分を確認する</td>
+</tr>
+<tr>
+<td>同じ操作の繰り返し</td>
+<td>同一Actionの連続で、加算や重複排除が仕様どおりかを確認する</td>
+</tr>
+<tr>
+<td>Selector</td>
+<td>合計・件数・絞り込みなどの導出値がstateから正しく計算されることを確認する</td>
+</tr>
+<tr>
+<td>初期化・リセット</td>
+<td>リセットのActionで初期状態に戻ることを確認する</td>
+</tr>
+<tr>
+<td>不正なAction・値</td>
+<td>想定外のpayloadでstateが壊れないことを確認する</td>
+</tr>
+<tr>
+<td rowspan="5">コンポーネント表示テスト（FE単体）</td>
+<td>Propsごとの表示</td>
+<td>代表的なPropsの組み合わせで表示内容を確認する</td>
+</tr>
+<tr>
+<td>表示状態</td>
+<td>正常・Loading・Empty・ErrorのStoryごとに表示を確認する</td>
+</tr>
+<tr>
+<td>条件分岐</td>
+<td>権限・フラグ・件数による表示の有無を確認する</td>
+</tr>
+<tr>
+<td>文言・フォーマット</td>
+<td>ラベル・日付・金額・コード名称の表示形式を確認する</td>
+</tr>
+<tr>
+<td>長文・多件</td>
+<td>長い文字列と多数の要素で、折り返しと省略を確認する</td>
+</tr>
+<tr>
+<td rowspan="6">コンポーネント操作テスト（FE単体）</td>
+<td>クリック・タップ</td>
+<td>ボタン・リンクの操作でイベントが発火し、表示が変わることを確認する</td>
+</tr>
+<tr>
+<td>テキスト入力・選択</td>
+<td>入力・選択で値が反映され、関連する項目が更新されることを確認する</td>
+</tr>
+<tr>
+<td>活性・非活性</td>
+<td>条件により操作できない状態と、その表示を確認する</td>
+</tr>
+<tr>
+<td>キーボード操作</td>
+<td>Tab・Enter・Escape・矢印キーで操作できることを確認する</td>
+</tr>
+<tr>
+<td>フォーカス移動</td>
+<td>ダイアログの開閉とエラー発生時のフォーカス位置を確認する</td>
+</tr>
+<tr>
+<td>イベントの引数</td>
+<td>親へ渡すコールバックの呼び出し回数と引数を確認する</td>
+</tr>
+<tr>
+<td rowspan="6">APIクライアントテスト（FE単体）</td>
+<td>リクエストの組み立て</td>
+<td>検索条件・登録データからQuery ParameterとRequest Bodyを生成する</td>
+</tr>
+<tr>
+<td>認証ヘッダー</td>
+<td>トークンが付与されることと、未認証時の扱いを確認する</td>
+</tr>
+<tr>
+<td>正常応答の処理</td>
+<td>200の応答を画面用のデータに変換することを確認する</td>
+</tr>
+<tr>
+<td>エラー応答の処理</td>
+<td>400・401・403・404・500ごとの処理をMSWで再現する</td>
+</tr>
+<tr>
+<td>通信失敗・タイムアウト</td>
+<td>ネットワークエラーと遅延で、リトライとエラー処理を確認する</td>
+</tr>
+<tr>
+<td>キャンセル</td>
+<td>画面遷移や再検索で、前のリクエストが取り消されることを確認する</td>
+</tr>
+<tr>
+<td rowspan="5">コンポーネント品質テスト（FE単体）</td>
+<td>Visual Regression</td>
+<td>Storyごとのスクリーンショットを基準画像と比較する</td>
+</tr>
+<tr>
+<td>アクセシビリティ</td>
+<td>Storyごとにaxe-coreでラベル・ARIA・コントラストを検査する</td>
+</tr>
+<tr>
+<td>レスポンシブ</td>
+<td>ブレークポイントごとのViewportで表示崩れを確認する</td>
+</tr>
+<tr>
+<td>キーボード操作</td>
+<td>Storyのplay関数でフォーカス順と操作を確認する</td>
+</tr>
+<tr>
+<td>オーバーフロー</td>
+<td>長文・大量データのStoryで、崩れと省略を確認する</td>
+</tr>
+<tr>
+<td rowspan="7">画面・画面遷移のテスト（FE内部結合）</td>
+<td>操作から結果まで</td>
+<td>検索ボタン押下から結果表示までをMock APIで通す</td>
+</tr>
+<tr>
+<td>画面内の連動</td>
+<td>検索条件とページネーション・ソートの連動を確認する</td>
+</tr>
+<tr>
+<td>Storeを介した連動</td>
+<td>一覧での操作がほかのコンポーネントに反映されることを確認する</td>
+</tr>
+<tr>
+<td>APIエラー時の画面全体</td>
+<td>Mockで各エラーを返し、画面全体の表示と復帰の操作を確認する</td>
+</tr>
+<tr>
+<td>画面遷移</td>
+<td>一覧から詳細への遷移と戻りで、状態と入力が保持されることを確認する</td>
+</tr>
+<tr>
+<td>認証状態による制御</td>
+<td>未認証・権限なしでの画面表示とリダイレクトをMockで確認する</td>
+</tr>
+<tr>
+<td>画面単位の品質</td>
+<td>画面全体に対して、axe-core・レスポンシブ・フォーカス順を確認する</td>
+</tr>
+<tr>
+<td>実APIとの結合テスト（FE・BE結合）</td>
+<td>10章の観点表を使う</td>
+<td>API契約の整合・認証認可・永続化・実データ・環境・非同期の29観点</td>
+</tr>
+<tr>
+<td rowspan="2">業務シナリオのテスト（ST）</td>
+<td>業務フローの完遂</td>
+<td>複数画面にまたがる業務を、実APIと実データで最初から最後まで通す</td>
+</tr>
+<tr>
+<td>非機能要求</td>
+<td>性能・運用・セキュリティの要求を、システム全体に対して確認する</td>
+</tr>
+</tbody>
+</table></div>
+<p>観点はすべての対象に当てはめるのではなく、対象のコンポーネント・画面が持つ責務に応じて選びます。種別ごとの主たる検証工程は5章のマトリクス、実Backendがないと検証できない事項は10章の観点表を参照してください。</p>
 <h2 id="参考文献注記">参考文献・注記</h2>
 <section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />

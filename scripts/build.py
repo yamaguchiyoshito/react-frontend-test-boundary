@@ -113,7 +113,9 @@ def wrap_page(title: str, body: str, site: dict, css: str) -> str:
         if text == '参考文献・注記':
             ref_anchor = ident
             continue
-        links.append(f'<a class="chapter-link" href="#{ident}"><span>{i:02d}</span>{html.escape(label)}</a>')
+        # 章番号のない見出し（付録）は番号の代わりに A を付ける
+        number = f'{i:02d}' if re.match(r'^\d+\.', text) else 'A'
+        links.append(f'<a class="chapter-link" href="#{ident}"><span>{number}</span>{html.escape(label)}</a>')
     ref_link = (f'<a href="#{ref_anchor}">参考文献・注記</a><br>' if ref_anchor else '') + '<a href="offline.html" download>単一HTML（オフライン閲覧用）</a>'
     tagline_html = f'<p>{html.escape(site["tagline"])}</p>' if site.get('tagline') else ''
     footer_label = f'{html.escape(site.get("date", ""))}時点 / 第{str(site.get("version", "1")).split(".")[0]}版'
