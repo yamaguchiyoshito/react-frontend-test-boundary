@@ -288,6 +288,36 @@ def fig_04_unit_test_types():
 
 
 # =====================================================================
+# §4.4 状態管理テストの範囲
+# =====================================================================
+def fig_04c_store_test_scope():
+    body = [title('Store単体なら単体テスト、Storeを介した画面の連動は内部結合')]
+    # 左：Store単体
+    body.append(rect(60, 90, 410, 250, NEUTRAL, STROKE, 1))
+    body.append(text(265, 120, 'Store単体を検証する（単体テスト）', 16, 700, PRI_TEXT))
+    for x, s in zip((80, 205, 330), ('商品追加', '数量変更', '商品削除')):
+        body.append(pill(x, 146, 120, 36, s, PRIMARY, 14, 700, PRI_TEXT, LINE))
+    body.append(arrow(265, 184, 265, 212))
+    body.append(box(150, 212, 230, 56, PRIMARY, 'カートStore', 'Action → Reducer → State', 16, 14, LINE, 1, PRI_TEXT))
+    body.append(arrow(265, 268, 265, 292))
+    body.append(box(120, 292, 290, 40, BG, '一覧・数量・合計金額の値を検証', None, 14, 14, LINE, 1, T1))
+    body.append(text(265, 366, 'Storeの更新ルールだけを見る', 15, 700, PRI_TEXT))
+    # 右：Storeを介した連動
+    body.append(rect(530, 90, 410, 250, NEUTRAL, STROKE, 1))
+    body.append(text(735, 120, 'Storeを介した連動を検証する（FE内部結合）', 16, 700, LINK_TEXT))
+    body.append(link(645, 198, 690, 234))
+    body.append(link(825, 198, 780, 234))
+    body.append(box(560, 150, 170, 48, LINK, '商品一覧', 'コンポーネント', 15, 14, LINK_LINE, 1, LINK_TEXT))
+    body.append(box(750, 150, 170, 48, LINK, 'カート表示', 'コンポーネント', 15, 14, LINK_LINE, 1, LINK_TEXT))
+    body.append(box(635, 234, 200, 50, PRIMARY, 'カートStore', None, 16, 14, LINE, 1, PRI_TEXT))
+    body.append(text(735, 318, '一覧で追加すると、カート表示の件数と合計が変わる', 14, 400, T1))
+    body.append(text(735, 366, 'コンポーネント間の連動を見る', 15, 700, LINK_TEXT))
+    body.append(note(404, '同じStoreでも、Storeだけを見るのか、Storeを介した画面の連動を見るのかで区分が変わる'))
+    return svg(1000, 432, '状態管理テストの範囲', body,
+               desc='左の枠「Store単体を検証する（単体テスト）」には「商品追加」「数量変更」「商品削除」の操作から「カートStore（Action → Reducer → State）」へ、さらに「一覧・数量・合計金額の値を検証」へ下向きの矢印を引き「Storeの更新ルールだけを見る」、右の枠「Storeを介した連動を検証する（FE内部結合）」には「商品一覧コンポーネント」「カート表示コンポーネント」を「カートStore」と線で結び「一覧で追加すると、カート表示の件数と合計が変わる」「コンポーネント間の連動を見る」と記した図')
+
+
+# =====================================================================
 # §4.5 コンポーネントの4つの表示状態
 # =====================================================================
 def fig_04b_component_states():
@@ -420,6 +450,7 @@ FIGURES = {
     '03-env-vs-level': fig_03_env_vs_level,
     '04-unit-test-types': fig_04_unit_test_types,
     '04b-component-states': fig_04b_component_states,
+    '04c-store-test-scope': fig_04c_store_test_scope,
     '05-main-level-per-type': fig_05_main_level_per_type,
     '06-process-mapping': fig_06_process_mapping,
     '07-test-architecture': fig_07_test_architecture,

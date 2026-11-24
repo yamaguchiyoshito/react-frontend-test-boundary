@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="432" viewBox="0 0 1000 432" role="img" aria-label="状態管理テストの範囲" aria-describedby="desc">
+<desc id="desc">左の枠「Store単体を検証する（単体テスト）」には「商品追加」「数量変更」「商品削除」の操作から「カートStore（Action → Reducer → State）」へ、さらに「一覧・数量・合計金額の値を検証」へ下向きの矢印を引き「Storeの更新ルールだけを見る」、右の枠「Storeを介した連動を検証する（FE内部結合）」には「商品一覧コンポーネント」「カート表示コンポーネント」を「カートStore」と線で結び「一覧で追加すると、カート表示の件数と合計が変わる」「コンポーネント間の連動を見る」と記した図</desc>
+<rect width="100%" height="100%" fill="#fcfdfd"/>
+<text x="50" y="50" text-anchor="start" font-family="sans-serif" font-size="24" font-weight="700" fill="#18324b">Store単体なら単体テスト、Storeを介した画面の連動は内部結合</text>
+<rect x="60" y="90" width="410" height="250" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/>
+<text x="265" y="120" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#2b5f9e">Store単体を検証する（単体テスト）</text>
+<rect x="80" y="146" width="120" height="36" rx="18.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="140" y="169" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">商品追加</text>
+<rect x="205" y="146" width="120" height="36" rx="18.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="265" y="169" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">数量変更</text>
+<rect x="330" y="146" width="120" height="36" rx="18.0" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="390" y="169" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#2b5f9e">商品削除</text>
+<path d="M265.0 184.0 L265.0 202.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="265.0,212.0 258.0,200.0 272.0,200.0" fill="#607a91"/>
+<rect x="150" y="212" width="230" height="56" rx="12" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="265" y="236" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#2b5f9e">カートStore</text><text x="265" y="260" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">Action → Reducer → State</text>
+<path d="M265.0 268.0 L265.0 282.0" stroke="#607a91" stroke-width="3" fill="none"/><polygon points="265.0,292.0 258.0,280.0 272.0,280.0" fill="#607a91"/>
+<rect x="120" y="292" width="290" height="40" rx="12" fill="#fcfdfd" stroke="#607a91" stroke-width="1"/><text x="265" y="319" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#223e53">一覧・数量・合計金額の値を検証</text>
+<text x="265" y="366" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#2b5f9e">Storeの更新ルールだけを見る</text>
+<rect x="530" y="90" width="410" height="250" rx="12" fill="#eef3f1" stroke="#8ea6b2" stroke-width="1"/>
+<text x="735" y="120" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#6a4ea6">Storeを介した連動を検証する（FE内部結合）</text>
+<path d="M645.0 198.0 L690.0 234.0" stroke="#8a6cc1" stroke-width="3" fill="none"/>
+<path d="M825.0 198.0 L780.0 234.0" stroke="#8a6cc1" stroke-width="3" fill="none"/>
+<rect x="560" y="150" width="170" height="48" rx="12" fill="#e9e4f5" stroke="#8a6cc1" stroke-width="1"/><text x="645" y="170" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#6a4ea6">商品一覧</text><text x="645" y="194" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">コンポーネント</text>
+<rect x="750" y="150" width="170" height="48" rx="12" fill="#e9e4f5" stroke="#8a6cc1" stroke-width="1"/><text x="835" y="170" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#6a4ea6">カート表示</text><text x="835" y="194" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#36556d">コンポーネント</text>
+<rect x="635" y="234" width="200" height="50" rx="12" fill="#e1edf8" stroke="#607a91" stroke-width="1"/><text x="735" y="266" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#2b5f9e">カートStore</text>
+<text x="735" y="318" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#223e53">一覧で追加すると、カート表示の件数と合計が変わる</text>
+<text x="735" y="366" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#6a4ea6">コンポーネント間の連動を見る</text>
+<text x="500" y="404" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#55646d">同じStoreでも、Storeだけを見るのか、Storeを介した画面の連動を見るのかで区分が変わる</text>
+</svg>
