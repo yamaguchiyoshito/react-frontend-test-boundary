@@ -551,6 +551,24 @@ def fig_08_ai_input_granularity():
 
 
 # =====================================================================
+# §10 Mockで検証済みの事項と実Backendで検証する事項
+# =====================================================================
+def fig_10_backend_only_items():
+    body = [title('Mockで検証できる事項と、実Backendで初めて検証できる事項を分けておく')]
+    body.append(card(60, 96, 400, 236, POSITIVE, 'PG・UTで検証済み（Mock API）',
+                     ['表示・操作・画面遷移', '入力検証とエラー表示', 'Mock応答ごとの画面の振る舞い', '画面内・画面間の連携', 'リクエストの組み立て'],
+                     hs=16, rs=14, stroke=POS_LINE, head_fill=POS_TEXT, row_fill=T1, top=30, lh=22))
+    body.append(card(540, 96, 400, 236, ATTENTION, '実Backendで初めて検証できる',
+                     ['API契約の整合（型・必須・エラー形式）', '認証認可の実際（トークン・権限・Cookie）', '永続化とデータ整合（再検索・一意制約）', '実データ依存（件数・ソート・文字）', '環境依存（CORS・タイムアウト・サイズ）', '非同期・時間依存（バッチ・サーバー時刻）'],
+                     hs=16, rs=14, stroke=ATT_LINE, head_fill=ATT_TEXT, row_fill=T1, top=30, lh=22))
+    body.append(link(500, 96, 500, 332, STROKE, 2, dashed=True))
+    body.append(text(500, 362, 'PG・UTの完了時に、右の一覧を「未検証の事項」として明示する', 15, 700, T1))
+    body.append(note(404, '分けておけば、IT工程で見つかる不具合は接続に関するものに限られる'))
+    return svg(1000, 432, 'Mockで検証済みの事項と実Backendで検証する事項', body,
+               desc='左の緑のカード「PG・UTで検証済み（Mock API）」に表示・操作・画面遷移、入力検証とエラー表示、Mock応答ごとの画面の振る舞い、画面内・画面間の連携、リクエストの組み立てを、右の橙のカード「実Backendで初めて検証できる」にAPI契約の整合、認証認可の実際、永続化とデータ整合、実データ依存、環境依存、非同期・時間依存を列挙し、間を破線で区切って「PG・UTの完了時に、右の一覧を「未検証の事項」として明示する」と記した図')
+
+
+# =====================================================================
 # 図の一覧（ファイル名 → 生成関数）。章番号で始める。
 # =====================================================================
 FIGURES = {
@@ -569,6 +587,7 @@ FIGURES = {
     '06-process-mapping': fig_06_process_mapping,
     '07-test-architecture': fig_07_test_architecture,
     '08-ai-input-granularity': fig_08_ai_input_granularity,
+    '10-backend-only-items': fig_10_backend_only_items,
 }
 
 
