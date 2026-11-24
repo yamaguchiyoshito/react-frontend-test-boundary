@@ -381,6 +381,37 @@ def fig_07_test_architecture():
 
 
 # =====================================================================
+# §8 テスト生成に与える情報の粒度
+# =====================================================================
+def fig_08_ai_input_granularity():
+    body = [title('単体は個別の成果物で足り、内部結合は成果物間の関係を渡す')]
+    # 左：単体テストの生成
+    body.append(rect(60, 90, 410, 250, NEUTRAL, STROKE, 1))
+    body.append(text(265, 120, '単体テストの生成', 17, 700, PRI_TEXT))
+    body.append(pill(110, 150, 140, 40, 'ソースコード', PRIMARY, 14, 700, PRI_TEXT, LINE))
+    body.append(pill(280, 150, 140, 40, '個別仕様', PRIMARY, 14, 700, PRI_TEXT, LINE))
+    body.append(arrow(265, 196, 265, 262))
+    body.append(box(150, 262, 230, 50, BG, 'テストコード（Vitest）', None, 15, 14, LINE, 1, T1))
+    body.append(text(265, 366, 'インプットは個別の成果物', 15, 700, PRI_TEXT))
+    # 右：FE内部結合テストの生成
+    body.append(rect(530, 90, 410, 250, NEUTRAL, STROKE, 1))
+    body.append(text(735, 120, 'FE内部結合テストの生成', 17, 700, LINK_TEXT))
+    pills = [(560, 140, '画面仕様'), (750, 140, '画面遷移'), (560, 190, '状態遷移'), (750, 190, 'API契約（OpenAPI）')]
+    centers = [(x + 85, y + 20) for x, y, _ in pills]
+    for i in range(4):
+        for j in range(i + 1, 4):
+            body.append(link(*centers[i], *centers[j], LINK_LINE, 2))
+    for x, y, s in pills:
+        body.append(pill(x, y, 170, 40, s, LINK, 14, 700, LINK_TEXT, LINK_LINE))
+    body.append(arrow(735, 236, 735, 262))
+    body.append(box(565, 262, 340, 50, BG, 'テストコード（Testing Library＋MSW）', None, 15, 14, LINK_LINE, 1, T1))
+    body.append(text(735, 366, 'インプットは成果物間の関係', 15, 700, LINK_TEXT))
+    body.append(note(404, '内部結合のテストは、画面・遷移・状態・API契約の整合を前提にするので、関係ごと理解させる'))
+    return svg(1000, 432, 'テスト生成に与える情報の粒度', body,
+               desc='左の枠「単体テストの生成」には「ソースコード」「個別仕様」の2つの入力から「テストコード（Vitest）」へ矢印を引き「インプットは個別の成果物」、右の枠「FE内部結合テストの生成」には「画面仕様」「画面遷移」「状態遷移」「API契約（OpenAPI）」の4つの入力を互いに線で結んでから「テストコード（Testing Library＋MSW等）」へ矢印を引き「インプットは成果物間の関係」と記した図')
+
+
+# =====================================================================
 # 図の一覧（ファイル名 → 生成関数）。章番号で始める。
 # =====================================================================
 FIGURES = {
@@ -392,6 +423,7 @@ FIGURES = {
     '05-main-level-per-type': fig_05_main_level_per_type,
     '06-process-mapping': fig_06_process_mapping,
     '07-test-architecture': fig_07_test_architecture,
+    '08-ai-input-granularity': fig_08_ai_input_granularity,
 }
 
 
