@@ -251,18 +251,18 @@ def fig_03_env_vs_level():
             body.append(rect(x, y, pw, 60, BG, STROKE, 1, rx=6))
     # 例：環境が同じでもレベルは違う／レベルが同じでも環境は違う
     body.append(rect(cols[0][0], ys[2], pw, 60, PRIMARY, LINE, 1, rx=6))
-    body.append(lines(cols[0][0] + pw / 2, ys[2] + 26, ['Playwrightで', 'コンポーネントだけ'], 14, 700, PRI_TEXT, lh=18))
+    body.append(lines(cols[0][0] + pw / 2, ys[2] + 26, ['Storybookで', 'コンポーネントだけ'], 14, 700, PRI_TEXT, lh=18))
     body.append(rect(cols[1][0], ys[1], pw, 60, LINK, LINK_LINE, 1, rx=6))
     body.append(lines(cols[1][0] + pw / 2, ys[1] + 26, ['Vitest＋jsdomで', '画面全体の連携'], 14, 700, LINK_TEXT, lh=18))
     # ほかの典型的な置き場所
     body.append(text(cols[0][0] + pw / 2, ys[0] + 35, 'ロジック・Store', 14, 400, T2))
     body.append(text(cols[0][0] + pw / 2, ys[1] + 35, 'コンポーネント', 14, 400, T2))
-    body.append(text(cols[1][0] + pw / 2, ys[2] + 35, '画面遷移', 14, 400, T2))
+    body.append(lines(cols[1][0] + pw / 2, ys[2] + 26, ['Storybookと', 'Playwrightで画面遷移'], 14, 400, T2, lh=18))
     body.append(text(cols[2][0] + pw / 2, ys[3] + 35, '実APIとの結合', 14, 400, T2))
     body.append(text(cols[3][0] + pw / 2, ys[3] + 35, '業務シナリオ', 14, 400, T2))
-    body.append(note(450, '実ブラウザを使っても対象がコンポーネントだけなら単体。Vitestでも連携を見れば内部結合'))
+    body.append(note(450, '実ブラウザ（Storybook）でも対象がコンポーネントだけなら単体。Vitestでも連携を見れば内部結合'))
     return svg(1000, 478, 'テストレベルと実行環境の2軸', body,
-               desc='横にFE単体、FE内部結合、FE・BE結合、ST（システムテスト）の4段階、縦にNode.js（Vitest）、仮想DOM（jsdom等）、実ブラウザ（Browser Mode等）、実システム環境（Playwright等）の4つの実行環境を置いた格子の図。FE単体×実ブラウザに「Playwrightでコンポーネントだけ」、FE内部結合×仮想DOMに「Vitest＋jsdomで画面全体の連携」を強調して置き、ほかにFE単体×Node.jsに「ロジック・Store」、FE単体×仮想DOMに「コンポーネント」、FE内部結合×実ブラウザに「画面遷移」、FE・BE結合×実システム環境に「実APIとの結合」、ST×実システム環境に「業務シナリオ」を置いている')
+               desc='横にFE単体、FE内部結合、FE・BE結合、ST（システムテスト）の4段階、縦にNode.js（Vitest）、仮想DOM（jsdom等）、実ブラウザ（Browser Mode等）、実システム環境（Playwright等）の4つの実行環境を置いた格子の図。FE単体×実ブラウザに「Storybookでコンポーネントだけ」、FE内部結合×仮想DOMに「Vitest＋jsdomで画面全体の連携」を強調して置き、ほかにFE単体×Node.jsに「ロジック・Store」、FE単体×仮想DOMに「コンポーネント」、FE内部結合×実ブラウザに「StorybookとPlaywrightで画面遷移」、FE・BE結合×実システム環境に「実APIとの結合」、ST×実システム環境に「業務シナリオ」を置いている')
 
 
 # =====================================================================
@@ -505,7 +505,7 @@ def fig_07_test_architecture():
     layers = [
         (200, ATTENTION, ATT_LINE, ATT_TEXT, 'E2E・ST', '業務シナリオ'),
         (340, ATTENTION, ATT_LINE, ATT_TEXT, 'FE・BE結合（実API）', 'Playwright'),
-        (480, LINK, LINK_LINE, LINK_TEXT, 'FE内部結合（画面全体・画面遷移）', 'Testing Library＋MSW／Playwright＋MSW'),
+        (480, LINK, LINK_LINE, LINK_TEXT, 'FE内部結合（画面全体・画面遷移）', 'Testing Library・Storybook・Playwright（＋MSW）'),
         (620, PRIMARY, LINE, PRI_TEXT, 'コンポーネントの表示・操作', 'Testing Library・Storybook'),
         (760, PRIMARY, LINE, PRI_TEXT, 'ロジック・Schema・Hooks・Store', 'Vitest：最も多く、最も速い'),
     ]
@@ -516,7 +516,7 @@ def fig_07_test_architecture():
     body.append(up_axis(950, 110, 376, '実環境', '速い・多い'))
     body.append(note(420, '概念上の配分であり、テストケース数の固定比率ではない'))
     return svg(1000, 448, '概念上のテスト配分', body,
-               desc='上から「E2E・ST（業務シナリオ）」「FE・BE結合（実API）：Playwright」「FE内部結合（画面全体・画面遷移）：Testing Library＋MSW／Playwright＋MSW」「コンポーネントの表示・操作：Testing Library・Storybook」「ロジック・Schema・Hooks・Store：Vitest（最も多く、最も速い）」の5層を、下ほど幅が広い段々のピラミッドとして積み、右端の下から上への矢印に「速い・多い」から「実環境」へと記した図')
+               desc='上から「E2E・ST（業務シナリオ）」「FE・BE結合（実API）：Playwright」「FE内部結合（画面全体・画面遷移）：Testing Library・Storybook・Playwright（＋MSW）」「コンポーネントの表示・操作：Testing Library・Storybook」「ロジック・Schema・Hooks・Store：Vitest（最も多く、最も速い）」の5層を、下ほど幅が広い段々のピラミッドとして積み、右端の下から上への矢印に「速い・多い」から「実環境」へと記した図')
 
 
 # =====================================================================

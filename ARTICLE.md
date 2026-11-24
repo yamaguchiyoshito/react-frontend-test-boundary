@@ -67,7 +67,7 @@ jsdomは、Node.js上でブラウザのDOMを模擬するライブラリです�
 
 ![テストレベルと実行環境の2軸](assets/03-env-vs-level.svg)
 
-Playwrightを使用したとしても、コンポーネントだけを対象としていれば単体レベルのテストです。[^pw-ct]
+実ブラウザで動かすStorybookやVitest Browser Modeを使用したとしても、コンポーネントだけを対象としていれば単体レベルのテストです。Playwrightにもコンポーネント単位で実行する機能がありますが[^pw-ct]、本記事では実ブラウザでのコンポーネント検証はStorybookに寄せ、Playwrightは画面全体を対象にするFrontend内部結合テスト以降で、Storybookと併用します。
 
 逆に、Vitestを使用して複数のコンポーネントと状態管理の連携を検証する場合は、Frontend内部結合テストになります。
 
@@ -86,7 +86,7 @@ Frontend単体テストは、テスト対象によって次の8種類に分類�
 | 5 | コンポーネント表示テスト | Props、条件分岐、表示内容 | Testing Library、Storybook |
 | 6 | コンポーネント操作テスト | 入力、クリック、イベント | Testing Library、Storybook |
 | 7 | APIクライアントテスト | リクエスト生成、応答処理 | Vitest、MSW |
-| 8 | コンポーネント品質テスト | 視覚的品質、アクセシビリティ | Storybook、Playwright、axe-core |
+| 8 | コンポーネント品質テスト | 視覚的品質、アクセシビリティ | Storybook、axe-core |
 
 ![8種別が検証する範囲](assets/04-unit-test-types.svg)
 
@@ -274,13 +274,13 @@ AIにテストを生成させる場合も、「この画面のテストを作っ
 | FE単体 | Hooksテスト | Hookのソースコード、状態遷移の定義 | Vitest、Testing Library |
 | FE単体 | 状態管理テスト | Storeの定義、状態遷移の定義 | Vitest |
 | FE単体 | コンポーネント表示・操作テスト | Props定義、コンポーネント仕様、表示状態の一覧 | Testing Library、Storybook（Storyとplay関数） |
-| FE単体 | Visual Regression Test | Story、承認済みの基準画像 | Storybook、Playwright（スクリーンショット比較） |
-| FE単体 | Accessibility Test | Story、ARIA・ラベルの実装規約 | Storybook、Playwright、axe-core |
-| FE単体 | Responsive Test | Story、ブレークポイントの定義 | Storybook（Viewport）、Playwright |
-| FE単体 | Keyboard Navigation Test | Story、フォーカス順・キー操作の仕様 | Testing Library、Playwright |
-| FE単体 | Overflow Test | Story、長文・大量データのテストデータ | Storybook、Playwright |
+| FE単体 | Visual Regression Test | Story、承認済みの基準画像 | Storybook（スクリーンショット比較） |
+| FE単体 | Accessibility Test | Story、ARIA・ラベルの実装規約 | Storybook、axe-core |
+| FE単体 | Responsive Test | Story、ブレークポイントの定義 | Storybook（Viewport） |
+| FE単体 | Keyboard Navigation Test | Story、フォーカス順・キー操作の仕様 | Testing Library、Storybook（play関数） |
+| FE単体 | Overflow Test | Story、長文・大量データのテストデータ | Storybook |
 | FE単体 | APIクライアントテスト | OpenAPI定義、通信処理のソースコード | Vitest、MSW |
-| FE内部結合 | 画面・画面遷移のテスト | 画面仕様、画面遷移、状態遷移、OpenAPI定義 | Testing Library、Playwright、MSW |
+| FE内部結合 | 画面・画面遷移のテスト | 画面仕様、画面遷移、状態遷移、OpenAPI定義 | Testing Library、Storybook、Playwright、MSW |
 | FE・BE結合 | 実APIとの結合テスト | OpenAPI定義、結合テスト仕様 | Playwright（実API） |
 | ST | 業務シナリオのテスト | 業務フロー、システム要求 | Playwright |
 
