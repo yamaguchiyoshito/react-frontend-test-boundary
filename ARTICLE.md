@@ -302,8 +302,6 @@ Frontend開発工程としての完成判定は、次の条件で定義するこ
 - 画面内および画面間の状態・操作の連携が検証されている。
 - 実Backendとの結合によって初めて検証可能になる事項が明確に分離されている。
 
-**IT工程を、Frontendの基本的な動作不良を発見する工程にしない。**
-
 ## 参考文献・注記
 
 [^istqb]: ISTQB, *Standard Glossary of Terms used in Software Testing*。テストレベル（コンポーネントテスト、統合テスト、システムテスト）の定義。https://glossary.istqb.org/
