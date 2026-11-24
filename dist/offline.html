@@ -716,7 +716,7 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 </thead>
 <tbody>
 <tr>
-<td rowspan="7">FE単体</td>
+<td rowspan="11">FE単体</td>
 <td>ロジックテスト</td>
 <td>関数のソースコード、業務ルールの仕様</td>
 <td>Vitest</td>
@@ -742,9 +742,29 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 <td>Testing Library</td>
 </tr>
 <tr>
-<td>コンポーネント品質テスト</td>
-<td>Story、デザイン仕様</td>
-<td>VRT、アクセシビリティテスト</td>
+<td>Visual Regression Test</td>
+<td>Story、承認済みの基準画像</td>
+<td>Storybook、Playwright（スクリーンショット比較）</td>
+</tr>
+<tr>
+<td>Accessibility Test</td>
+<td>Story、ARIA・ラベルの実装規約</td>
+<td>Storybook、Playwright、axe-core</td>
+</tr>
+<tr>
+<td>Responsive Test</td>
+<td>Story、ブレークポイントの定義</td>
+<td>Storybook（Viewport）、Playwright</td>
+</tr>
+<tr>
+<td>Keyboard Navigation Test</td>
+<td>Story、フォーカス順・キー操作の仕様</td>
+<td>Testing Library、Playwright</td>
+</tr>
+<tr>
+<td>Overflow Test</td>
+<td>Story、長文・大量データのテストデータ</td>
+<td>Storybook、Playwright</td>
 </tr>
 <tr>
 <td>APIクライアントテスト</td>
@@ -771,6 +791,7 @@ body:has(.toc-state:checked) .toc-drawer{transform:none;visibility:visible}
 </tr>
 </tbody>
 </table></div>
+<p>コンポーネント品質テストは、§4.8の5つの観点ごとに行を分けています。Storyは共通の入力ですが、観点ごとに基準画像、実装規約、ブレークポイント、操作仕様、テストデータと、加えて渡す成果物が異なるからです。</p>
 <p>表のとおり、単体テストとFrontend内部結合テストでは、AIに与えるべき情報の粒度が異なります。</p>
 <p>単体テストではソースコードと個別仕様が中心になります。一方、Frontend内部結合テストでは、画面仕様、画面遷移、状態遷移、API契約など、複数の成果物間の関係を理解させる必要があります。</p>
 <figure>
